@@ -48,7 +48,7 @@ const landing = `
     <meta property="og:url" content="https://www.fourrabbitsstudio.com/" />
     <meta property="og:description" content="Creating digital planners, digital stickers, and digital notebooks for platforms like GoodNotes" />
     <meta property="og:type" content="website" />
-    <meta property="og:locale" content="en_GB" />
+    <meta property="og:locale" content="en_US" />
 
     <meta property="og:image" content="http://www.fourrabbitsstudio.com/assets/logo.png" />
     <meta property="og:image:secure_url" content="http://www.fourrabbitsstudio.com/assets/logo.png" />
@@ -65,7 +65,7 @@ const landing = `
   <main style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
         <img style="max-width: 100%;"src="/assets/logo.svg" alt="logo">
         <div style="margin: 6rem 0; display: flex; flex-direction: row; justify-content: center; align-items: center; gap: 4rem;">
-            <a href="https://www.etsy.com/"><img style="height: 3rem;" src="/assets/etsy.svg" alt="etsy"></img></a>
+            <a href="https://fourrabbitsstudio.etsy.com/"><img style="height: 3rem;" src="/assets/etsy.svg" alt="etsy"></img></a>
             <a href="https://www.instagram.com/"><img style="height: 3rem;" src="/assets/instagram.svg" alt="instagram"></img></a>
             <a href="https://www.tiktok.com/"><img style="height: 3rem;" src="/assets/tiktok.svg" alt="tiktok"></img></a>
         </div>

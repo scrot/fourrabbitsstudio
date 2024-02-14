@@ -24,8 +24,8 @@ func main() {
 		t.Execute(w, nil)
 	})
 
-	slog.Info("server started...", "port", 8081)
-	if err := http.ListenAndServe(":8081", http.DefaultServeMux); err != nil {
+	slog.Info("server started...", "port", 8080)
+	if err := http.ListenAndServe(":8080", http.DefaultServeMux); err != nil {
 		slog.Error(err.Error())
 		os.Exit(1)
 	}

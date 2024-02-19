@@ -21,4 +21,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.22.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.27.0 // indirect
 	github.com/aws/smithy-go v1.20.0 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
+	github.com/mailerlite/mailerlite-go v1.0.4 // indirect
 )

@@ -46,11 +46,10 @@ func run() error {
 		Handler: server,
 	}
 
+	logger.Info("server listening", "port", port)
 	if err := httpServer.ListenAndServe(); err != nil {
 		return err
 	}
-
-	logger.Info("server listening", "port", port)
 
 	return nil
 }

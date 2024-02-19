@@ -19,7 +19,9 @@ func NewBucket(ctx context.Context, name string) *Bucket {
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "aws error: %s", err)
+		os.Exit(1)
 	}
+
 	client := s3.NewFromConfig(cfg)
 
 	return &Bucket{

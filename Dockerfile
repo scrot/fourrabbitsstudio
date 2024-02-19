@@ -12,10 +12,8 @@ COPY *.go .
 
 RUN go build -ldflags="-X main.port=8080" -o=/tmp/fourrabbitsstudio .
 
-FROM  gcr.io/distroless/static:latest
+FROM  gcr.io/distroless/base:latest
 
 COPY --from=builder /tmp/fourrabbitsstudio /usr/local/bin/
-
-# USER nonroot
 
 CMD ["fourrabbitsstudio"]

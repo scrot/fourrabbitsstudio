@@ -10,7 +10,7 @@ build:
 run:
 	@ podman build \
 		-t ${BINARY_NAME} .
-	@ podman run -it \
+	@ podman run -it --rm \
 		-v ${HOME}/.aws/credentials:/root/.aws/credentials:ro \
 		-p ${SERVER_PORT}:8080 ${BINARY_NAME}
 

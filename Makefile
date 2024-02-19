@@ -8,8 +8,11 @@ build:
 
 .PHONY: run
 run:
-	@ podman build -t ${BINARY_NAME} .
-	@ podman run -it -p ${SERVER_PORT}:8080 ${BINARY_NAME}
+	@ podman build \
+		-t ${BINARY_NAME} .
+	@ podman run -it \
+		-v ${HOME}/.aws/credentials:/root/.aws/credentials:ro \
+		-p ${SERVER_PORT}:8080 ${BINARY_NAME}
 
 
 # TODO: wait for 1.22 release

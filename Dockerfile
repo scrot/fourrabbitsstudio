@@ -12,15 +12,10 @@ COPY *.go .
 
 RUN go build -ldflags="-X main.port=8080" -o=/tmp/fourrabbitsstudio .
 
-
-FROM  scratch
-
-# Import the user and group files
-COPY --from=builder /etc/passwd /etc/passwd
-COPY --from=builder /etc/group /etc/group
-
-# Import certificates (for outgoing HTTPS requests)
-COPY --from=builder /etc/ssl /etc/ssl
+FROM  gcr.io/distroless/static:latest
 
 COPY --from=builder /tmp/fourrabbitsstudio /usr/local/bin/
+
+# USER nonroot
+
 CMD ["fourrabbitsstudio"]

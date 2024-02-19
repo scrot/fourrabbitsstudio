@@ -15,7 +15,6 @@ type Bucket struct {
 	client *s3.Client
 }
 
-// TODO: newBucket
 func NewBucket(ctx context.Context, name string) *Bucket {
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {

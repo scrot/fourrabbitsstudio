@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -15,11 +14,19 @@ type Bucket struct {
 	client *s3.Client
 }
 
-func NewBucket(ctx context.Context, name string) *Bucket {
+func NewBucket(ctx context.Context) (*Bucket, error) {
+	name, err := Getenv("BUCKET_NAME")
+	if err != nil {
+		return nil, err
+	}
+
+	if err := checkAWSVariables(); err != nil {
+		return nil, err
+	}
+
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "aws error: %s", err)
-		os.Exit(1)
+		return nil, err
 	}
 
 	client := s3.NewFromConfig(cfg)
@@ -27,15 +34,15 @@ func NewBucket(ctx context.Context, name string) *Bucket {
 	return &Bucket{
 		name:   name,
 		client: client,
-	}
+	}, nil
 }
 
-func (b *Bucket) allObjects() ([]string, error) {
+func (b *Bucket) allObjects(ctx context.Context) ([]string, error) {
 	params := &s3.ListObjectsV2Input{
 		Bucket: aws.String(b.name),
 	}
 
-	res, err := b.client.ListObjectsV2(context.TODO(), params)
+	res, err := b.client.ListObjectsV2(ctx, params)
 	if err != nil {
 		return []string{}, err
 	}
@@ -46,4 +53,26 @@ func (b *Bucket) allObjects() ([]string, error) {
 	}
 
 	return objects, nil
+}
+
+func checkAWSVariables() error {
+	_, confErr := os.Stat(config.DefaultSharedConfigFilename())
+	_, credErr := os.Stat(config.DefaultSharedCredentialsFilename())
+	if confErr == nil && credErr == nil {
+		return nil
+	}
+
+	if _, err := Getenv("AWS_ACCESS_KEY_ID"); err != nil {
+		return err
+	}
+
+	if _, err := Getenv("AWS_SECRET_ACCESS_KEY"); err != nil {
+		return err
+	}
+
+	if _, err := Getenv("AWS_REGION"); err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -8,7 +8,13 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
+
+	"github.com/lmittmann/tint"
+	"go.uber.org/automaxprocs/maxprocs"
 )
+
+//go:generate npm run build
 
 var (
 	port = "8080"
@@ -22,7 +28,7 @@ var (
 
 func main() {
 	if err := run(); err != nil {
-		fmt.Fprintf(os.Stderr, "main: %s\n", err)
+		fmt.Fprintf(os.Stderr, "%s\n", err)
 		os.Exit(1)
 	}
 }
@@ -30,16 +36,48 @@ func main() {
 func run() error {
 	ctx := context.Background()
 
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	h := tint.NewHandler(os.Stdout, &tint.Options{
+		Level:      slog.LevelDebug,
+		TimeFormat: time.Kitchen,
+	})
+	logger := slog.New(h)
+
+	// Adhere Linux container CPU quota
+	procslogger := &procsLogger{logger}
+	undo, err := maxprocs.Set(maxprocs.Logger(procslogger.log))
+	defer undo()
+	if err != nil {
+		return fmt.Errorf("failed to set GOMAXPROCS: %w", err)
+	}
 
 	templates, err := template.ParseFS(templates, "templates/*.tmpl")
 	if err != nil {
 		return err
 	}
 
-	bucket := NewBucket(ctx, "fourrabbitsstudio")
+	bucket, err := NewBucket(ctx)
+	if err != nil {
+		return err
+	}
 
-	server := newServer(logger, templates, bucket)
+	subscriber, err := NewSubscriber()
+	if err != nil {
+		return err
+	}
+
+	products, err := NewProductStore(ctx)
+	if err != nil {
+		return err
+	}
+	defer products.conn.Close(ctx)
+
+	now, err := products.Now(ctx)
+	if err != nil {
+		return err
+	}
+	logger.Info("connected to productstore", "db-time", now.Format(time.RFC822))
+
+	server := newServer(logger, templates, bucket, subscriber, products)
 
 	httpServer := http.Server{
 		Addr:    ":" + port,
@@ -52,4 +90,12 @@ func run() error {
 	}
 
 	return nil
+}
+
+type procsLogger struct {
+	Logger *slog.Logger
+}
+
+func (l *procsLogger) log(s string, v ...interface{}) {
+	l.Logger.Info(fmt.Sprintf(s, v...))
 }

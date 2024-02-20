@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
@@ -15,12 +15,20 @@ type Bucket struct {
 }
 
 func NewBucket(ctx context.Context) (*Bucket, error) {
-	name, err := Getenv("BUCKET_NAME")
-	if err != nil {
+	if _, err := Getenv("AWS_ACCESS_KEY_ID"); err != nil {
 		return nil, err
 	}
 
-	if err := checkAWSVariables(); err != nil {
+	if _, err := Getenv("AWS_SECRET_ACCESS_KEY"); err != nil {
+		return nil, err
+	}
+
+	if _, err := Getenv("AWS_REGION"); err != nil {
+		return nil, err
+	}
+
+	name, err := Getenv("BUCKET_NAME")
+	if err != nil {
 		return nil, err
 	}
 
@@ -55,24 +63,18 @@ func (b *Bucket) allObjects(ctx context.Context) ([]string, error) {
 	return objects, nil
 }
 
-func checkAWSVariables() error {
-	_, confErr := os.Stat(config.DefaultSharedConfigFilename())
-	_, credErr := os.Stat(config.DefaultSharedCredentialsFilename())
-	if confErr == nil && credErr == nil {
-		return nil
+func (b *Bucket) downloadObject(ctx context.Context, key string) ([]byte, error) {
+	object := &s3.GetObjectInput{
+		Bucket: aws.String(b.name),
+		Key:    aws.String(key),
 	}
 
-	if _, err := Getenv("AWS_ACCESS_KEY_ID"); err != nil {
-		return err
+	dl := manager.NewDownloader(b.client)
+	buf := manager.NewWriteAtBuffer([]byte{})
+
+	if _, err := dl.Download(ctx, buf, object); err != nil {
+		return []byte{}, nil
 	}
 
-	if _, err := Getenv("AWS_SECRET_ACCESS_KEY"); err != nil {
-		return err
-	}
-
-	if _, err := Getenv("AWS_REGION"); err != nil {
-		return err
-	}
-
-	return nil
+	return buf.Bytes(), nil
 }

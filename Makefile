@@ -18,6 +18,9 @@ server/live:
 	@podman build \
 		-t ${BINARY_NAME} .
 	@podman run -it --rm \
+		-e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
+		-e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
+		-e AWS_REGION=${AWS_REGION} \
 		-e BUCKET_NAME=${BUCKET_NAME} \
 		-e MAILERLITE_TOKEN=${MAILERLITE_TOKEN} \
 		-e POSTGRES_USERNAME=${POSTGRES_USERNAME} \
@@ -25,8 +28,6 @@ server/live:
 		-e POSTGRES_HOST=${POSTGRES_HOST} \
 		-e POSTGRES_PORT=${POSTGRES_PORT} \
 		-e POSTGRES_DB=${POSTGRES_DB} \
-		-v ${HOME}/.aws/config:/root/.aws/config:ro \
-		-v ${HOME}/.aws/credentials:/root/.aws/credentials:ro \
 		-p ${SERVER_PORT}:8080 ${BINARY_NAME}
 
 

@@ -2,11 +2,19 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 )
+
+var ErrMissingField = errors.New("missing fields")
+
+type Product struct {
+	ProductLink  string
+	DownloadLink string
+}
 
 type ProductStore struct {
 	conn *pgx.Conn
@@ -62,37 +70,60 @@ func (s *ProductStore) Now(ctx context.Context) (time.Time, error) {
 	return now, nil
 }
 
-func (s *ProductStore) All(ctx context.Context) (map[string][]string, error) {
+func (s *ProductStore) All(ctx context.Context) ([]Product, error) {
 	const stmt = `
   SELECT product_link, download_link
   FROM products
   `
 	rows, err := s.conn.Query(ctx, stmt)
 	if err != nil {
-		return nil, err
+		return []Product{}, err
 	}
 
-	products := make(map[string][]string)
+	var ps []Product
 	for rows.Next() {
-		var link, object string
-		if err := rows.Scan(&link, &object); err != nil {
-			return nil, err
+		var p Product
+		if err := rows.Scan(&p.ProductLink, &p.DownloadLink); err != nil {
+			return []Product{}, err
 		}
-		products[link] = append(products[link], object)
+		ps = append(ps, p)
 	}
 
-	return products, nil
+	return ps, nil
 }
 
-func (s *ProductStore) Link(ctx context.Context, productLink, downloadLink string) error {
+func (s *ProductStore) CreateLink(ctx context.Context, productLink, downloadLink string) error {
 	const stmt = `
   INSERT INTO products (product_link, download_link)
   VALUES ($1, $2)
   `
+
+	if productLink == "" || downloadLink == "" {
+		return ErrMissingField
+	}
 
 	if _, err := s.conn.Exec(ctx, stmt, productLink, downloadLink); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func (s *ProductStore) DownloadLink(ctx context.Context, productLink string) (string, error) {
+	const stmt = `
+  SELECT download_link
+  FROM products
+  WHERE product_link = $1
+  `
+
+	if productLink == "" {
+		return "", ErrMissingField
+	}
+
+	var downloadLink string
+	if err := s.conn.QueryRow(ctx, stmt, productLink).Scan(&downloadLink); err != nil {
+		return "", err
+	}
+
+	return downloadLink, nil
 }

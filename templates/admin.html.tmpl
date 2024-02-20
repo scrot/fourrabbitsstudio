@@ -1,7 +1,6 @@
 {{define "main"}}
 <main>
-  {{template "products" .Products}}
-  {{template "unlinked" .Unlinked}}
+  {{template "products" .}}
 </main>
 {{end}}
 
@@ -14,28 +13,19 @@
     </tr>
   </thead>
   <tbody>
-  {{range $k, $v := .}}
-    <td>{{$k}}</td>
-    <td>{{index $v 0}}</td>
-  {{end}}
-  </tbody>
-</table>
-{{end}}
-
-{{define "unlinked"}}
-<table>
-  <thead>
-    <tr>
-      <th scope="col">Unlinked Download</th>
-      <th scope="col">action</th>
-    </tr>
-  </thead>
-  <tbody>
   {{range .}}
-    <td>{{.}}</td>
-    <td><button hx-put="/objects/{{.}}">Generate link</button></td>
+    {{if .ProductLink}}
+      <tr>
+        <td>{{.ProductLink}}</td>
+        <td>{{.DownloadLink}}</td>
+      </tr>
+    {{else}}
+      <tr>
+        <td><button hx-post="/products" hx-vals='{"download": "{{.DownloadLink}}"}'>New Link</button></td>
+        <td name="download">{{.DownloadLink}}</td>
+      </tr>
+    {{end}}
   {{end}}
   </tbody>
 </table>
 {{end}}
-

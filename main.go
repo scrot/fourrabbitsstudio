@@ -23,7 +23,7 @@ var (
 	assets embed.FS
 
 	//go:embed templates
-	templates embed.FS
+	templateFS embed.FS
 )
 
 func main() {
@@ -50,10 +50,11 @@ func run() error {
 		return fmt.Errorf("failed to set GOMAXPROCS: %w", err)
 	}
 
-	templates, err := template.ParseFS(templates, "templates/*.tmpl")
+	partials, err := template.ParseFS(templateFS, "templates/partials/*.tmpl")
 	if err != nil {
 		return err
 	}
+	templates := &Template{templateFS, partials}
 
 	bucket, err := NewBucket(ctx)
 	if err != nil {

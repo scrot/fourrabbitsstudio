@@ -1,0 +1,41 @@
+{{define "main"}}
+<main>
+  {{template "products" .Products}}
+  {{template "unlinked" .Unlinked}}
+</main>
+{{end}}
+
+{{define "products"}}
+<table>
+  <thead>
+    <tr>
+      <th scope="col">Product</th>
+      <th scope="col">Download</th>
+    </tr>
+  </thead>
+  <tbody>
+  {{range $k, $v := .}}
+    <td>{{$k}}</td>
+    <td>{{index $v 0}}</td>
+  {{end}}
+  </tbody>
+</table>
+{{end}}
+
+{{define "unlinked"}}
+<table>
+  <thead>
+    <tr>
+      <th scope="col">Unlinked Download</th>
+      <th scope="col">action</th>
+    </tr>
+  </thead>
+  <tbody>
+  {{range .}}
+    <td>{{.}}</td>
+    <td><button hx-put="/objects/{{.}}">Generate link</button></td>
+  {{end}}
+  </tbody>
+</table>
+{{end}}
+

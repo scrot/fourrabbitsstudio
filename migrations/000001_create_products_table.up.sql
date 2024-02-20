@@ -1,6 +1,5 @@
 CREATE TABLE IF NOT EXISTS defaultdb.products 
 (
-  product_id INT PRIMARY KEY,
-  product_link UUID UNIQUE NOT NULL,
+  product_link UUID PRIMARY KEY, 
   download_link TEXT UNIQUE NOT NULL
 );

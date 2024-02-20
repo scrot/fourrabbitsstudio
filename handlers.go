@@ -2,26 +2,26 @@ package main
 
 import (
 	"fmt"
-	"html/template"
 	"log/slog"
 	"net/http"
-	"strings"
+
+	"github.com/google/uuid"
 )
 
-func newRootHandler(l *slog.Logger, t *template.Template) http.Handler {
+func newLandingHandler(l *slog.Logger, t *Template) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		slog.Info("new request", "url", r.URL.String())
-		if err := t.ExecuteTemplate(w, "root.html.tmpl", nil); err != nil {
-			slog.Error(err.Error())
+		l.Info("new request", "url", r.URL.String())
+		if err := t.renderPage(w, "landing.html.tmpl", nil); err != nil {
+			l.Error(err.Error())
 			http.Error(w, "Whoeps!", http.StatusInternalServerError)
 		}
 	})
 }
 
-func newSubscribeHandler(l *slog.Logger, t *template.Template, subscriber *Subscriber) http.Handler {
+func newSubscribeHandler(l *slog.Logger, t *Template, subscriber *Subscriber) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
-			slog.Error(err.Error())
+			l.Error(err.Error())
 			http.Error(w, "Whoeps!", http.StatusInternalServerError)
 		}
 
@@ -29,21 +29,35 @@ func newSubscribeHandler(l *slog.Logger, t *template.Template, subscriber *Subsc
 		l.With("email", email)
 
 		if err := subscriber.Subscribe(r.Context(), email); err != nil {
-			slog.Error(err.Error())
+			l.Error(err.Error())
 			http.Error(w, "Whoeps!", http.StatusInternalServerError)
 		}
 		l.Info("new subscriber")
 
-		if err := t.ExecuteTemplate(w, "thanks", nil); err != nil {
-			slog.Error(err.Error())
+		if err := t.renderPartial(w, "thanks", nil); err != nil {
+			l.Error(err.Error())
 			http.Error(w, "Whoeps!", http.StatusInternalServerError)
+			return
 		}
 	})
 }
 
 func newDownloadHandler(l *slog.Logger, b *Bucket, ps *ProductStore) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		slog.Info("new request", "url", r.URL.String())
+		l.Info("new request", "url", r.URL.String())
+	})
+}
+
+func newAdminHandler(l *slog.Logger, t *Template, b *Bucket, ps *ProductStore) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		l.Info("new request", "url", r.URL.String())
+
+		products, err := ps.All(r.Context())
+		if err != nil {
+			l.Error(err.Error())
+			http.Error(w, "Whoeps!", http.StatusInternalServerError)
+			return
+		}
 
 		objects, err := b.allObjects(r.Context())
 		if err != nil {
@@ -51,7 +65,48 @@ func newDownloadHandler(l *slog.Logger, b *Bucket, ps *ProductStore) http.Handle
 			return
 		}
 
-		w.Header().Add("Content-Type", "text/plain")
-		fmt.Fprint(w, strings.Join(objects, "\n"))
+		linked := make(map[string]struct{})
+		for _, pos := range products {
+			for _, po := range pos {
+				linked[po] = struct{}{}
+			}
+		}
+
+		var unlinked []string
+		for _, o := range objects {
+			if _, ok := linked[o]; !ok {
+				unlinked = append(unlinked, o)
+			}
+		}
+
+		data := struct {
+			Products map[string][]string
+			Unlinked []string
+		}{products, unlinked}
+
+		l.Info("loaded products", "products", len(products), "objects", len(objects), "unlinked", len(unlinked))
+
+		if err := t.renderPage(w, "admin.html.tmpl", data); err != nil {
+			l.Error(err.Error())
+			http.Error(w, "Whoeps!", http.StatusInternalServerError)
+			return
+		}
+	})
+}
+
+func newGenerateLinkHandler(l *slog.Logger, t *Template, ps *ProductStore) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		object := r.PathValue("object")
+		l.Info("generate new link", "object", object)
+
+		link := uuid.New()
+		if err := ps.Link(r.Context(), link.String(), object); err != nil {
+			l.Error(err.Error())
+			http.Error(w, "Whoeps!", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("HX-Redirect", "/admin")
+		w.Write([]byte{})
 	})
 }

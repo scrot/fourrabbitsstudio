@@ -61,3 +61,38 @@ func (s *ProductStore) Now(ctx context.Context) (time.Time, error) {
 
 	return now, nil
 }
+
+func (s *ProductStore) All(ctx context.Context) (map[string][]string, error) {
+	const stmt = `
+  SELECT product_link, download_link
+  FROM products
+  `
+	rows, err := s.conn.Query(ctx, stmt)
+	if err != nil {
+		return nil, err
+	}
+
+	products := make(map[string][]string)
+	for rows.Next() {
+		var link, object string
+		if err := rows.Scan(&link, &object); err != nil {
+			return nil, err
+		}
+		products[link] = append(products[link], object)
+	}
+
+	return products, nil
+}
+
+func (s *ProductStore) Link(ctx context.Context, productLink, downloadLink string) error {
+	const stmt = `
+  INSERT INTO products (product_link, download_link)
+  VALUES ($1, $2)
+  `
+
+	if _, err := s.conn.Exec(ctx, stmt, productLink, downloadLink); err != nil {
+		return err
+	}
+
+	return nil
+}

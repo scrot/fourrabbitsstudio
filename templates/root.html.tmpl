@@ -1,3 +1,4 @@
+{{define "root"}}
 <!DOCTYPE html>
   <html lang="en">
   <head>
@@ -31,11 +32,18 @@
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
   </head>
   <body class="min-h-screen bg-background flex flex-col items-center justify-center">
-    <main class="grow mx-8 flex items-center justify-center gap-8 ">
-        {{template "newsletter"}}
-    </main>
+    {{template "main" .}}
     <footer>
     {{template "handles"}}
     </footer>
   </body>
 </html>
+{{end}}
+
+{{define "handles"}}
+<div class="flex flex-row gap-14 justify-center p-8">
+    <a href="https://fourrabbitsstudio.etsy.com/"><i class="fa-brands fa-etsy text-5xl"></i></a>
+    <a href="https://www.instagram.com/"><i class="fa-brands fa-instagram text-5xl"></i></a>
+    <a href="https://www.tiktok.com/"><i class="fa-brands fa-tiktok text-5xl"></i></a>
+</div>
+{{end}}

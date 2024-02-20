@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -12,11 +13,32 @@ type ProductStore struct {
 }
 
 func NewProductStore(ctx context.Context) (*ProductStore, error) {
-	dsn, err := Getenv("POSTGRES_DSN")
+	uname, err := Getenv("POSTGRES_USERNAME")
 	if err != nil {
 		return nil, err
 	}
 
+	secret, err := Getenv("POSTGRES_SECRET")
+	if err != nil {
+		return nil, err
+	}
+
+	host, err := Getenv("POSTGRES_HOST")
+	if err != nil {
+		return nil, err
+	}
+
+	port, err := Getenv("POSTGRES_PORT")
+	if err != nil {
+		return nil, err
+	}
+
+	dbname, err := Getenv("POSTGRES_DB")
+	if err != nil {
+		return nil, err
+	}
+
+	dsn := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=verify-full", uname, secret, host, port, dbname)
 	conn, err := pgx.Connect(ctx, dsn)
 	if err != nil {
 		return nil, err

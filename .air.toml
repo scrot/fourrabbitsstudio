@@ -5,9 +5,9 @@ tmp_dir = "tmp"
 [build]
   args_bin = []
   bin = "/tmp/fourrabbitsstudio"
-  cmd = "make build"
+  cmd = "make server/build"
   delay = 1000
-  exclude_dir = ["assets", "tmp", "vendor", "testdata", "node_modules"]
+  exclude_dir = ["assets", "tmp", "vendor", "testdata", "node_modules", "migrations"]
   exclude_file = []
   exclude_regex = ["_test.go"]
   exclude_unchanged = false

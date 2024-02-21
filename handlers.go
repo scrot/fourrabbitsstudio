@@ -25,45 +25,98 @@ func newLandingHandler(l *slog.Logger, t *Template) http.Handler {
 	})
 }
 
-func newSubscribeHandler(l *slog.Logger, t *Template, subscriber *Subscriber) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if err := r.ParseForm(); err != nil {
-			l.Error(err.Error())
-			http.Error(w, "Whoeps!", http.StatusInternalServerError)
-		}
-
-		email := r.PostFormValue("email")
-
-		if err := subscriber.Subscribe(r.Context(), email); err != nil {
-			l.Error(err.Error())
-			http.Error(w, "Whoeps!", http.StatusInternalServerError)
-		}
-		l.Info("new subscriber", "email", email)
-
-		if err := t.renderPartial(w, "thanks", nil); err != nil {
-			l.Error(err.Error())
-			http.Error(w, "Whoeps!", http.StatusInternalServerError)
+func newErrorHandler(l *slog.Logger, t *Template) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		if err := t.renderPage(w, "error.html.tmpl", nil); err != nil {
+			l.Error(fmt.Errorf("newErrorHandler: unexpected error: %w", err).Error())
 			return
 		}
 	})
 }
 
-func newDownloadHandler(l *slog.Logger, b *Bucket, ps *ProductStore) http.Handler {
+func newLoginHandler(l *slog.Logger, t *Template, s *Store) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if s.sessions.GetBool(r.Context(), "admin") {
+			RedirectTo(w, "/admin")
+		}
+		if err := t.renderPage(w, "login.html.tmpl", nil); err != nil {
+			WriteError(l, w, r, err, "")
+			return
+		}
+	})
+}
+
+func newLoginRequestHandler(l *slog.Logger, t *Template, s *Store) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil {
+			WriteError(l, w, r, err, "")
+			return
+		}
+
+		username := r.PostForm.Get("username")
+		password := r.PostForm.Get("password")
+
+		// TODO: proper field validation
+		if username == "" || password == "" {
+			WriteError(l, w, r, ErrMissingField, "Missing fields")
+			return
+		}
+
+		admin, err := s.IsAdmin(r.Context(), username, password)
+		if err != nil {
+			WriteError(l, w, r, err, "")
+			return
+		}
+
+		l.Info("login request", "username", username, "admin", admin)
+
+		if admin {
+			s.sessions.Put(r.Context(), "admin", admin)
+			RedirectTo(w, "/admin")
+		} else {
+			err := fmt.Errorf("not admin")
+			WriteError(l, w, r, err, "Wrong username / password")
+			return
+		}
+	})
+}
+
+func newSubscribeHandler(l *slog.Logger, t *Template, subscriber *Subscriber) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseForm(); err != nil {
+			WriteError(l, w, r, err, "")
+			return
+		}
+
+		email := r.PostFormValue("email")
+
+		if err := subscriber.Subscribe(r.Context(), email); err != nil {
+			WriteError(l, w, r, err, "")
+			return
+		}
+		l.Info("new subscriber", "email", email)
+
+		if err := t.renderPartial(w, "thanks", nil); err != nil {
+			WriteError(l, w, r, err, "")
+			return
+		}
+	})
+}
+
+func newDownloadHandler(l *slog.Logger, t *Template, b *Bucket, s *Store) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		l.Info("new request", "url", r.URL.String())
 		link := r.PathValue("link")
 
-		key, err := ps.DownloadLink(r.Context(), link)
+		key, err := s.DownloadLink(r.Context(), link)
 		if err != nil {
-			l.Error(err.Error())
-			http.Error(w, "Whoeps!", http.StatusInternalServerError)
+			WriteError(l, w, r, err, "")
 			return
 		}
 
 		payload, err := b.downloadObject(r.Context(), key)
 		if err != nil {
-			l.Error(err.Error())
-			http.Error(w, "Whoeps!", http.StatusInternalServerError)
+			WriteError(l, w, r, err, "")
 			return
 		}
 
@@ -76,20 +129,19 @@ func newDownloadHandler(l *slog.Logger, b *Bucket, ps *ProductStore) http.Handle
 	})
 }
 
-func newAdminHandler(l *slog.Logger, t *Template, b *Bucket, ps *ProductStore) http.Handler {
+func newAdminHandler(l *slog.Logger, t *Template, b *Bucket, s *Store) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		l.Info("new request", "url", r.URL.String())
 
-		products, err := ps.All(r.Context())
+		products, err := s.AllProductLinks(r.Context())
 		if err != nil {
-			l.Error(err.Error())
-			http.Error(w, "Whoeps!", http.StatusInternalServerError)
+			WriteError(l, w, r, err, "")
 			return
 		}
 
 		downloads, err := b.allObjects(r.Context())
 		if err != nil {
-			l.Error(fmt.Sprintf("bucket error: %s", err), "bucket", b.name)
+			WriteError(l, w, r, err, "")
 			return
 		}
 
@@ -109,18 +161,16 @@ func newAdminHandler(l *slog.Logger, t *Template, b *Bucket, ps *ProductStore) h
 		l.Info("loaded products", "products", len(products), "downloads", len(downloads))
 
 		if err := t.renderPage(w, "admin.html.tmpl", products); err != nil {
-			l.Error(err.Error())
-			http.Error(w, "Whoeps!", http.StatusInternalServerError)
+			WriteError(l, w, r, err, "")
 			return
 		}
 	})
 }
 
-func newGenerateLinkHandler(l *slog.Logger, t *Template, ps *ProductStore) http.Handler {
+func newGenerateLinkHandler(l *slog.Logger, t *Template, s *Store) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
-			l.Error(err.Error())
-			http.Error(w, "Whoeps!", http.StatusInternalServerError)
+			WriteError(l, w, r, err, "")
 			return
 		}
 
@@ -128,13 +178,11 @@ func newGenerateLinkHandler(l *slog.Logger, t *Template, ps *ProductStore) http.
 		product := ulid.Make().String()
 
 		l.Info("new link", "download", download, "product", product)
-		if err := ps.CreateLink(r.Context(), product, download); err != nil {
-			l.Error(err.Error())
-			http.Error(w, "Whoeps!", http.StatusInternalServerError)
+		if err := s.CreateProductLink(r.Context(), product, download); err != nil {
+			WriteError(l, w, r, err, "")
 			return
 		}
 
-		w.Header().Set("HX-Redirect", "/admin")
-		w.Write([]byte{})
+		RedirectTo(w, "/admin")
 	})
 }

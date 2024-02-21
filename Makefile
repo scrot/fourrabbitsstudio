@@ -48,5 +48,5 @@ db/up:
 
 .PHONY: db/reset
 db/reset: 
-	@cockroach sql --url postgresql://${POSTGRES_DSN} --execute="TRUNCATE products, sessions;"
+	@cockroach sql --url postgresql://${POSTGRES_DSN} --execute="TRUNCATE products, sessions, users;"
 	@migrate -database cockroachdb://${POSTGRES_DSN} -path migrations down

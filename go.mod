@@ -3,6 +3,8 @@ module github.com/scrot/fourrabbitsstudio
 go 1.22.0
 
 require (
+	github.com/alexedwards/scs/pgxstore v0.0.0-20240203174419-a38e822451b6
+	github.com/alexedwards/scs/v2 v2.7.0
 	github.com/aws/aws-sdk-go-v2 v1.25.0
 	github.com/aws/aws-sdk-go-v2/config v1.27.1
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.16.3
@@ -12,6 +14,7 @@ require (
 	github.com/mailerlite/mailerlite-go v1.0.4
 	github.com/oklog/ulid/v2 v2.1.0
 	go.uber.org/automaxprocs v1.5.3
+	golang.org/x/crypto v0.17.0
 )
 
 require (
@@ -35,7 +38,6 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 )

@@ -7,8 +7,11 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/alexedwards/scs/pgxstore"
+	"github.com/alexedwards/scs/v2"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"golang.org/x/crypto/bcrypt"
 )
 
 const (
@@ -31,7 +34,7 @@ type ProductStoreConfig struct {
 	*pgxpool.Config
 }
 
-func NewProductStoreConfig(l *slog.Logger) (*ProductStoreConfig, error) {
+func NewStoreConfig(l *slog.Logger) (*ProductStoreConfig, error) {
 	uname, err := Getenv("POSTGRES_USERNAME")
 	if err != nil {
 		return nil, err
@@ -77,11 +80,12 @@ func NewProductStoreConfig(l *slog.Logger) (*ProductStoreConfig, error) {
 	return &ProductStoreConfig{config}, nil
 }
 
-type ProductStore struct {
+type Store struct {
 	connPool *pgxpool.Pool
+	sessions *scs.SessionManager
 }
 
-func NewProductStore(ctx context.Context, config *ProductStoreConfig) (*ProductStore, error) {
+func NewStore(ctx context.Context, config *ProductStoreConfig) (*Store, error) {
 	connPool, err := pgxpool.NewWithConfig(ctx, config.Config)
 	if err != nil {
 		return nil, fmt.Errorf("NewProductStore: load configuration: %w", err)
@@ -97,14 +101,20 @@ func NewProductStore(ctx context.Context, config *ProductStoreConfig) (*ProductS
 		return nil, fmt.Errorf("NewProductStore: pinging database: %w", err)
 	}
 
-	return &ProductStore{connPool}, nil
+	sessions := scs.New()
+	sessions.Store = pgxstore.New(connPool)
+
+	// cleanup expired sessions
+	pgxstore.NewWithCleanupInterval(connPool, 30*time.Minute)
+
+	return &Store{connPool, sessions}, nil
 }
 
-func (s *ProductStore) Close() {
+func (s *Store) Close() {
 	s.connPool.Close()
 }
 
-func (s *ProductStore) Now(ctx context.Context) (time.Time, error) {
+func (s *Store) Now(ctx context.Context) (time.Time, error) {
 	const stmt = `SELECT NOW()`
 
 	var now time.Time
@@ -115,7 +125,30 @@ func (s *ProductStore) Now(ctx context.Context) (time.Time, error) {
 	return now, nil
 }
 
-func (s *ProductStore) All(ctx context.Context) ([]Product, error) {
+func (s *Store) IsAdmin(ctx context.Context, username string, password string) (bool, error) {
+	const stmt = `
+  SELECT password, admin
+  FROM users
+  WHERE username = $1
+  `
+
+	var (
+		hash    []byte
+		isAdmin bool
+	)
+
+	if err := s.connPool.QueryRow(ctx, stmt, username).Scan(&hash, &isAdmin); err != nil {
+		return false, err
+	}
+
+	if err := bcrypt.CompareHashAndPassword(hash, []byte(password)); err != nil {
+		return false, err
+	}
+
+	return isAdmin, nil
+}
+
+func (s *Store) AllProductLinks(ctx context.Context) ([]Product, error) {
 	const stmt = `
   SELECT product_link, download_link
   FROM products
@@ -137,7 +170,7 @@ func (s *ProductStore) All(ctx context.Context) ([]Product, error) {
 	return ps, nil
 }
 
-func (s *ProductStore) CreateLink(ctx context.Context, productLink, downloadLink string) error {
+func (s *Store) CreateProductLink(ctx context.Context, productLink, downloadLink string) error {
 	const stmt = `
   INSERT INTO products (product_link, download_link)
   VALUES ($1, $2)
@@ -154,7 +187,7 @@ func (s *ProductStore) CreateLink(ctx context.Context, productLink, downloadLink
 	return nil
 }
 
-func (s *ProductStore) DownloadLink(ctx context.Context, productLink string) (string, error) {
+func (s *Store) DownloadLink(ctx context.Context, productLink string) (string, error) {
 	const stmt = `
   SELECT download_link
   FROM products

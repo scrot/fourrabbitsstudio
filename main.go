@@ -12,6 +12,7 @@ import (
 
 	"github.com/lmittmann/tint"
 	"go.uber.org/automaxprocs/maxprocs"
+	"golang.org/x/crypto/bcrypt"
 )
 
 //go:generate npm run build
@@ -66,31 +67,33 @@ func run() error {
 		return err
 	}
 
-	productsConfig, err := NewProductStoreConfig(logger)
+	storeConfig, err := NewStoreConfig(logger)
 	if err != nil {
 		return err
 	}
 
-	products, err := NewProductStore(ctx, productsConfig)
+	store, err := NewStore(ctx, storeConfig)
 	if err != nil {
 		return err
 	}
-	defer products.Close()
+	defer store.Close()
 
-	now, err := products.Now(ctx)
+	now, err := store.Now(ctx)
 	if err != nil {
 		return err
 	}
 	logger.Info("connected to productstore", "db-time", now.Format(time.RFC822))
 
-	server := newServer(logger, templates, bucket, subscriber, products)
+	server := newServer(logger, templates, bucket, subscriber, store)
 
 	httpServer := http.Server{
 		Addr:    ":" + port,
 		Handler: server,
 	}
 
-	logger.Info("server listening", "port", port)
+	secret, _ := bcrypt.GenerateFromPassword([]byte("secret"), bcrypt.DefaultCost)
+
+	logger.Info("server listening", "port", port, "secret", string(secret))
 	if err := httpServer.ListenAndServe(); err != nil {
 		return err
 	}

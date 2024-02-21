@@ -10,6 +10,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.16.3
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.50.2
 	github.com/jackc/pgx/v5 v5.5.3
+	github.com/justinas/alice v1.2.0
 	github.com/lmittmann/tint v1.0.4
 	github.com/mailerlite/mailerlite-go v1.0.4
 	github.com/oklog/ulid/v2 v2.1.0

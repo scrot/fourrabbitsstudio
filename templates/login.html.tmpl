@@ -1,15 +1,22 @@
 {{define "main"}}
-<main class="grow">
-  <form hx-post="/login" class="flex flex-col gap-4">
-    <div class="flex flex-col gap-4">
-      <label>Username</label>
-      <input type="text" name="username" placeholder="Rabbit"></input>
-    </div>
-    <div class="flex flex-col gap-4">
-      <label>Password</label>
-      <input type="password" name="password"></input>
-    </div>
-    <button type="submit">Login</button>
-  </form>
+<main class="grow w-screen flex flex-row items-center justify-center">
+  <div class="w-5/6 sm:w-[30rem] py-8 px-10 bg-lighter-bg rounded-xl bg-clip-border shadow-md">
+    <form hx-post="/login" class="flex flex-col gap-8">
+      <h6 class="block font-sans text-lg font-semibold uppercase leading-relaxed tracking-normal text-primary-txt antialiased">
+        Login
+      </h6>
+      <div class="flex flex-col gap-2">
+        <label class="text-dark-txt">Username</label>
+        <input type="text" name="username" placeholder="Rabbit" class="h-12 rounded-lg border border-dark-br outline-none indent-4 shadow-sm focus:border-primary-br"></input>
+      </div>
+      <div class="flex flex-col gap-2">
+        <label class="text-dark-txt">Password</label>
+        <input type="password" name="password" class="h-12 rounded-lg border border-dark-br outline-none indent-4 shadow-sm focus:border-primary-br"></input>
+      </div>
+      <div class="flex flex-row justify-end">
+        <button type="submit" class="px-2 w-24 h-12 rounded-lg bg-primary-btn text-pink-50 shadow-sm hover:bg-dark-primary-btn">Login</button>
+      <div>
+    </form>
+  </div>
 </main>
 {{end}}

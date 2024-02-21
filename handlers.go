@@ -108,6 +108,12 @@ func newLogoutHandler(l *slog.Logger, t *Template, s *Store) http.Handler {
 	})
 }
 
+func newCancelLoginHandler(l *slog.Logger, t *Template, s *Store) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		RedirectTo(w, r, "/")
+	})
+}
+
 func newSubscribeHandler(l *slog.Logger, t *Template, subscriber *Subscriber) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {

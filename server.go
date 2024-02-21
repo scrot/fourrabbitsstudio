@@ -17,13 +17,16 @@ func newServer(
 	mux := http.NewServeMux()
 
 	public := alice.New(store.sessions.LoadAndSave)
-	mux.Handle("GET /", public.Then(newLandingHandler(logger, templates, store)))
 	mux.Handle("GET /assets/", public.Then(http.FileServerFS(assets)))
-	mux.Handle("GET /products/{link}", public.Then(newDownloadHandler(logger, templates, bucket, store)))
-	mux.Handle("POST /subscribe", public.Then(newSubscribeHandler(logger, templates, subscriber)))
 	mux.Handle("GET /error", public.Then(newErrorHandler(logger, templates)))
+
+	mux.Handle("GET /", public.Then(newLandingHandler(logger, templates, store)))
+	mux.Handle("POST /subscribe", public.Then(newSubscribeHandler(logger, templates, subscriber)))
+	mux.Handle("GET /products/{link}", public.Then(newDownloadHandler(logger, templates, bucket, store)))
+
 	mux.Handle("GET /login", public.Then(newLoginHandler(logger, templates, store)))
 	mux.Handle("POST /login", public.Then(newLoginRequestHandler(logger, templates, store)))
+	mux.Handle("PUT /login/cancel", public.Then(newCancelLoginHandler(logger, templates, store)))
 	mux.Handle("GET /logout", public.Then(newLogoutHandler(logger, templates, store)))
 
 	// requires admin
@@ -58,6 +61,5 @@ func RedirectTo(w http.ResponseWriter, r *http.Request, path string) {
 	} else {
 		w.Header().Set("HX-Redirect", path)
 		w.Write([]byte{})
-
 	}
 }

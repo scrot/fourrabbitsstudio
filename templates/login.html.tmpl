@@ -13,7 +13,8 @@
         <label class="text-dark-txt">Password</label>
         <input type="password" name="password" placeholder="password" class="h-12 rounded-lg border border-dark-br outline-none indent-4 shadow-sm focus:border-primary-br"></input>
       </div>
-      <div class="flex flex-row justify-end">
+      <div class="flex flex-row justify-end gap-4">
+        <button hx-put="/login/cancel" class="px-2 w-24 h-12 rounded-lg bg-secondary-btn text-slate-50 shadow-sm hover:bg-dark-secondary-btn">Cancel</button>
         <button type="submit" class="px-2 w-24 h-12 rounded-lg bg-primary-btn text-pink-50 shadow-sm hover:bg-dark-primary-btn">Login</button>
       <div>
     </form>

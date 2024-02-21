@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS defaultdb.products;
+DROP TABLE IF EXISTS products;

@@ -66,11 +66,16 @@ func run() error {
 		return err
 	}
 
-	products, err := NewProductStore(ctx)
+	productsConfig, err := NewProductStoreConfig(logger)
 	if err != nil {
 		return err
 	}
-	defer products.conn.Close(ctx)
+
+	products, err := NewProductStore(ctx, productsConfig)
+	if err != nil {
+		return err
+	}
+	defer products.Close()
 
 	now, err := products.Now(ctx)
 	if err != nil {

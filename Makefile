@@ -2,6 +2,8 @@ OUTPUT_PATH := /tmp/
 BINARY_NAME := fourrabbitsstudio
 SERVER_PORT := 8081
 
+POSTGRES_DSN := ${POSTGRES_USERNAME}:${POSTGRES_SECRET}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=verify-full
+
 .PHONY: server/build
 server/build:
 	@go generate
@@ -42,9 +44,9 @@ server/live:
 
 .PHONY: db/up
 db/up: 
-	@migrate -database cockroachdb://${POSTGRES_USERNAME}:${POSTGRES_SECRET}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=verify-full -path migrations up
+	@migrate -database cockroachdb://${POSTGRES_DSN} -path migrations up
 
-.PHONY: db/down
-db/down: 
-	@migrate -database cockroachdb://${POSTGRES_USERNAME}:${POSTGRES_SECRET}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=verify-full -path migrations down
-	
+.PHONY: db/reset
+db/reset: 
+	@cockroach sql --url postgresql://${POSTGRES_DSN} --execute="TRUNCATE products, sessions;"
+	@migrate -database cockroachdb://${POSTGRES_DSN} -path migrations down

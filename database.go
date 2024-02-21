@@ -4,9 +4,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+const (
+	defaultMaxConns          = int32(100)
+	defaultMinConns          = int32(0)
+	defaultMaxConnLifetime   = time.Hour
+	defaultMaxConnIdleTime   = time.Minute * 30
+	defaultHealthCheckPeriod = time.Minute
+	defaultConnectTimeout    = time.Second * 5
 )
 
 var ErrMissingField = errors.New("missing fields")
@@ -16,11 +27,11 @@ type Product struct {
 	DownloadLink string
 }
 
-type ProductStore struct {
-	conn *pgx.Conn
+type ProductStoreConfig struct {
+	*pgxpool.Config
 }
 
-func NewProductStore(ctx context.Context) (*ProductStore, error) {
+func NewProductStoreConfig(l *slog.Logger) (*ProductStoreConfig, error) {
 	uname, err := Getenv("POSTGRES_USERNAME")
 	if err != nil {
 		return nil, err
@@ -47,23 +58,57 @@ func NewProductStore(ctx context.Context) (*ProductStore, error) {
 	}
 
 	dsn := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=verify-full", uname, secret, host, port, dbname)
-	conn, err := pgx.Connect(ctx, dsn)
+	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := conn.Ping(ctx); err != nil {
-		return nil, err
+	config.MaxConns = defaultMaxConns
+	config.MinConns = defaultMinConns
+	config.MaxConnLifetime = defaultMaxConnLifetime
+	config.MaxConnIdleTime = defaultMaxConnIdleTime
+	config.HealthCheckPeriod = defaultHealthCheckPeriod
+	config.ConnConfig.ConnectTimeout = defaultConnectTimeout
+
+	config.BeforeClose = func(_ *pgx.Conn) {
+		l.Info("database closed the connection")
 	}
 
-	return &ProductStore{conn}, nil
+	return &ProductStoreConfig{config}, nil
+}
+
+type ProductStore struct {
+	connPool *pgxpool.Pool
+}
+
+func NewProductStore(ctx context.Context, config *ProductStoreConfig) (*ProductStore, error) {
+	connPool, err := pgxpool.NewWithConfig(ctx, config.Config)
+	if err != nil {
+		return nil, fmt.Errorf("NewProductStore: load configuration: %w", err)
+	}
+
+	conn, err := connPool.Acquire(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("NewProductStore: aquire connection: %w", err)
+	}
+	defer conn.Release()
+
+	if err := conn.Ping(ctx); err != nil {
+		return nil, fmt.Errorf("NewProductStore: pinging database: %w", err)
+	}
+
+	return &ProductStore{connPool}, nil
+}
+
+func (s *ProductStore) Close() {
+	s.connPool.Close()
 }
 
 func (s *ProductStore) Now(ctx context.Context) (time.Time, error) {
 	const stmt = `SELECT NOW()`
 
 	var now time.Time
-	if err := s.conn.QueryRow(ctx, stmt).Scan(&now); err != nil {
+	if err := s.connPool.QueryRow(ctx, stmt).Scan(&now); err != nil {
 		return time.Time{}, nil
 	}
 
@@ -75,7 +120,7 @@ func (s *ProductStore) All(ctx context.Context) ([]Product, error) {
   SELECT product_link, download_link
   FROM products
   `
-	rows, err := s.conn.Query(ctx, stmt)
+	rows, err := s.connPool.Query(ctx, stmt)
 	if err != nil {
 		return []Product{}, err
 	}
@@ -102,7 +147,7 @@ func (s *ProductStore) CreateLink(ctx context.Context, productLink, downloadLink
 		return ErrMissingField
 	}
 
-	if _, err := s.conn.Exec(ctx, stmt, productLink, downloadLink); err != nil {
+	if _, err := s.connPool.Exec(ctx, stmt, productLink, downloadLink); err != nil {
 		return err
 	}
 
@@ -121,7 +166,7 @@ func (s *ProductStore) DownloadLink(ctx context.Context, productLink string) (st
 	}
 
 	var downloadLink string
-	if err := s.conn.QueryRow(ctx, stmt, productLink).Scan(&downloadLink); err != nil {
+	if err := s.connPool.QueryRow(ctx, stmt, productLink).Scan(&downloadLink); err != nil {
 		return "", err
 	}
 

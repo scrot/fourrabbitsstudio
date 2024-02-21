@@ -11,14 +11,22 @@ import (
 	"github.com/oklog/ulid/v2"
 )
 
-func newLandingHandler(l *slog.Logger, t *Template) http.Handler {
+func newLandingHandler(l *slog.Logger, t *Template, s *Store) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			http.NotFound(w, r)
 			return
 		}
 
-		if err := t.renderPage(w, "landing.html.tmpl", nil); err != nil {
+		data := struct {
+			User    string
+			IsAdmin bool
+		}{
+			s.sessions.GetString(r.Context(), "user"),
+			false,
+		}
+
+		if err := t.renderPage(w, "landing.html.tmpl", data); err != nil {
 			l.Error(err.Error())
 			http.Error(w, "Whoeps!", http.StatusInternalServerError)
 		}
@@ -75,6 +83,7 @@ func newLoginRequestHandler(l *slog.Logger, t *Template, s *Store) http.Handler 
 
 		if admin {
 			s.sessions.Put(r.Context(), "admin", admin)
+			s.sessions.Put(r.Context(), "user", username)
 			RedirectTo(w, r, "/admin")
 			return
 		} else {
@@ -82,6 +91,20 @@ func newLoginRequestHandler(l *slog.Logger, t *Template, s *Store) http.Handler 
 			WriteError(l, w, r, err)
 			return
 		}
+	})
+}
+
+func newLogoutHandler(l *slog.Logger, t *Template, s *Store) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		username := s.sessions.GetString(r.Context(), "user")
+
+		if username == "" {
+			RedirectTo(w, r, "/")
+			return
+		}
+
+		s.sessions.Destroy(r.Context())
+		RedirectTo(w, r, "/")
 	})
 }
 
@@ -168,7 +191,17 @@ func newAdminHandler(l *slog.Logger, t *Template, b *Bucket, s *Store) http.Hand
 
 		l.Info("loaded products", "products", len(products), "downloads", len(downloads))
 
-		if err := t.renderPage(w, "admin.html.tmpl", products); err != nil {
+		data := struct {
+			User     string
+			IsAdmin  bool
+			Products []Product
+		}{
+			s.sessions.GetString(r.Context(), "user"),
+			s.sessions.GetBool(r.Context(), "admin"),
+			products,
+		}
+
+		if err := t.renderPage(w, "admin.html.tmpl", data); err != nil {
 			WriteError(l, w, r, err)
 			return
 		}

@@ -1,7 +1,5 @@
 {{define "main"}}
-<main>
   {{template "products" .}}
-</main>
 {{end}}
 
 {{define "products"}}
@@ -13,7 +11,7 @@
     </tr>
   </thead>
   <tbody>
-  {{range .}}
+  {{range .Products}}
     {{if .ProductLink}}
       <tr>
         <td>{{.ProductLink}}</td>

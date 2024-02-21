@@ -28,22 +28,40 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/fontawesome.min.css" integrity="sha512-d0olNN35C6VLiulAobxYHZiXJmq+vl+BGIgAxQtD5+kqudro/xNMvv2yIHAciGHpExsIbKX3iLg+0B6d0k4+ZA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/brands.min.css" integrity="sha512-8RxmFOVaKQe/xtg6lbscU9DU0IRhURWEuiI0tXevv+lXbAHfkpamD4VKFQRto9WgfOJDwOZ74c/s9Yesv3VvIQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/solid.min.css" integrity="sha512-pZlKGs7nEqF4zoG0egeK167l6yovsuL8ap30d07kA5AJUq+WysFlQ02DLXAmN3n0+H3JVz5ni8SJZnrOaYXWBA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
   </head>
-  <body class="min-h-screen bg-light-bg text-darker-txt flex flex-col items-center justify-center">
-    {{template "main" .}}
-    <footer class="w-screen">
-    {{template "handles"}}
-    </footer>
+  <body class="h-dvh bg-light-bg text-darker-txt flex flex-col">
+    {{template "actions" .}}
+    <main class="grow">{{template "main" .}}</main>
+    <footer>{{template "handles"}}</footer>
   </body>
 </html>
 {{end}}
 
+{{define "actions"}}
+<div class="absolute top-0 right-0 p-6">
+  {{if .IsAdmin}}
+    <a href="/logout">
+      <svg class="size-[2.5rem] flex-no-shrink fill-secondary-btn hover:fill-primary-btn active:fill-dark-primary-btn" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+        <path d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z"/>
+      </svg>
+    </a>
+  {{else}}
+    <a href="{{if .User}}/admin{{else}}/login{{end}}">
+      <svg class="size-[2.5rem] flex-no-shrink fill-secondary-btn hover:fill-primary-btn active:fill-dark-primary-btn" viewBox="0 0 546.16113 543.52655" xmlns="http://www.w3.org/2000/svg">
+          <path d="m 262.39998,544.59973 c -44.40467,-0.3789 -88.93156,1.02201 -133.25991,-0.46812 -26.86606,-3.60602 -48.006194,-30.45817 -44.212447,-57.49715 2.736621,-26.48729 28.140987,-47.17718 54.584647,-46.28782 0.3743,-6.99645 -3.90044,-17.76123 -2.33428,-26.54424 -1.06915,-8.20653 2.01471,-19.84211 -1.62365,-25.92729 C 103.19151,382.0907 71.707659,367.47913 48.859018,343.60077 35.553104,329.85197 25.824771,312.65372 21.740715,293.9042 8.7722881,294.4323 -3.4204336,281.93421 0.69277021,269.00047 3.0855374,260.01058 11.831836,253.40564 21.242996,254.93332 c 9.00341,-41.15864 43.698005,-71.89484 82.052514,-86.14499 17.9954,-7.22842 37.43048,-10.04891 56.43064,-12.16561 13.47362,-35.7262 24.89167,-72.386567 40.62795,-107.161088 14.03278,-27.154871 49.65469,-40.302241 78.25229,-29.813373 26.52082,8.427865 45.05152,35.402637 44.52514,63.097809 -0.41476,23.768012 -15.24486,44.146462 -23.82449,65.679882 -6.9764,14.98061 -13.95279,29.96123 -20.92919,44.94184 17.49751,16.12123 32.56499,35.69247 37.70554,59.39951 3.51772,7.02184 -2.68087,22.45743 10.01876,18.969 22.16582,0.16633 44.87602,0.99756 65.14693,11.01082 33.77038,13.59301 60.25779,42.16866 74.13834,75.52617 21.01983,-14.0511 51.448,-10.16462 67.60586,9.43298 14.95809,16.08588 17.37058,41.93349 5.60185,60.62728 -10.11215,17.15664 -30.37557,27.31554 -50.28759,24.9766 -9.61649,-3.69437 -16.69927,-4.18482 -14.97113,8.50007 -4.68299,40.27892 -38.07319,74.15487 -77.67184,81.46711 -23.91838,2.64951 -48.41146,0.45392 -72.55182,1.23197 -20.23759,0.0301 -40.47518,0.0603 -60.71277,0.0904 z M 136.30092,282.6249 c 15.77352,0.96693 25.44165,-19.41516 15.87707,-31.54565 -8.02934,-11.58664 -28.66152,-9.6046 -33.39072,4.11907 -5.91448,11.99829 3.87598,27.86474 17.51365,27.42658 z M 103.25176,127.48573 c -3.444475,-2.4122 0.95944,-16.48575 0.0458,-23.34826 2.57678,-25.958577 -1.87018,-55.17763 15.47025,-76.954099 12.41695,-15.259122 30.60889,-24.9509894 50.37033,-25.8749799 6.36837,0.2308838 25.23444,0.1957462 12.55042,8.5210067 -23.65838,22.8468252 -29.12475,56.8690102 -41.51958,86.0788892 -3.4568,8.525063 -5.73649,17.578263 -10.1107,25.691703 -9.01064,0.38453 -18.07166,3.68142 -26.80651,5.88574 z"/>
+      </svg>
+    </a>
+  {{end}}
+</div>
+{{end}}
+
 {{define "handles"}}
 <div class="text-4xl justify-around sm:justify-center sm:gap-14 flex flex-row p-8">
-    <a href="https://fourrabbitsstudio.etsy.com/"><i class="fa-brands fa-etsy"></i></a>
-    <a href="https://www.instagram.com/"><i class="fa-brands fa-instagram"></i></a>
-    <a href="https://www.tiktok.com/"><i class="fa-brands fa-tiktok"></i></a>
+    <a href="https://fourrabbitsstudio.etsy.com/"><i class="fa-brands fa-etsy fill-secondary-btn hover:fill-primary-btn active:fill-dark-primary-btn"></i></a>
+    <a href="https://www.instagram.com/"><i class="fa-brands fa-instagram fill-secondary-btn hover:fill-primary-btn active:fill-dark-primary-btn"></i></a>
+    <a href="https://www.tiktok.com/"><i class="fa-brands fa-tiktok fill-secondary-btn hover:fill-primary-btn active:fill-dark-primary-btn"></i></a>
 </div>
 {{end}}

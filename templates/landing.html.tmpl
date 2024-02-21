@@ -1,14 +1,12 @@
 {{define "main"}}
-<main class="grow mx-8 flex items-center justify-center gap-8 ">
     {{template "newsletter"}}
-</main>
 {{end}}
 
 {{define "newsletter"}}
-<div class="max-w-[48rem] bg-lighter-bg flex items-center justify-center">
-  <div class="flex flex-row rounded-xl bg-clip-border text-gray-700 shadow-md">
-    <div class="flex items-center justify-center">
-        <img class="md:block hidden object-cover px-8 drop-shadow-md" src="/assets/logo.svg" alt="logo">
+<div class="size-full flex items-center justify-center px-12">
+  <div class="flex flex-row rounded-xl max-w-[48rem] bg-lighter-bg bg-clip-border text-gray-700 shadow-md">
+    <div class="sm:min-w-56 flex items-center justify-center">
+        <img class="hidden sm:block pl-8 object-cover drop-shadow-md" src="/assets/logo.svg" alt="logo">
     </div>
     <div class="p-8">
       <h6 class="mb-4 block font-sans text-base font-semibold uppercase leading-relaxed tracking-normal text-primary-txt antialiased">

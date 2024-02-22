@@ -73,7 +73,7 @@ func (b *Bucket) downloadObject(ctx context.Context, key string) ([]byte, error)
 	buf := manager.NewWriteAtBuffer([]byte{})
 
 	if _, err := dl.Download(ctx, buf, object); err != nil {
-		return []byte{}, nil
+		return []byte{}, err
 	}
 
 	return buf.Bytes(), nil

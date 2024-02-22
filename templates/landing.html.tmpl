@@ -3,9 +3,9 @@
 {{end}}
 
 {{define "newsletter"}}
-<div class="size-full flex items-center justify-center px-12">
+<div class="size-full flex justify-center items-center px-12">
   <div class="flex flex-row rounded-xl max-w-[48rem] bg-lighter-bg bg-clip-border text-gray-700 shadow-md">
-    <div class="sm:min-w-56 flex items-center justify-center">
+    <div class="h-fit sm:min-w-56 flex items-center justify-center">
         <img class="hidden sm:block pl-8 object-cover drop-shadow-md" src="/assets/logo.svg" alt="logo">
     </div>
     <div class="p-8">
@@ -20,7 +20,13 @@
       </p>
       <form hx-post="/subscribe" hx-swap="outerHTML" hx-target="this">
         <div class="flex flex-row gap-4">
-          <input class="grow h-12 rounded-lg border border-dark-br outline-none indent-4 shadow-sm focus:border-primary-br"  type="text" name="email" placeholder="Your email" />
+          <label class="relative block">
+            <span class="sr-only">Search</span>
+            <span class="absolute inset-y-0 left-0 flex items-center pl-2">
+              <svg class="h-6 w-6 fill-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M64 112c-8.8 0-16 7.2-16 16v22.1L220.5 291.7c20.7 17 50.4 17 71.1 0L464 150.1V128c0-8.8-7.2-16-16-16H64zM48 212.2V384c0 8.8 7.2 16 16 16H448c8.8 0 16-7.2 16-16V212.2L322 328.8c-38.4 31.5-93.7 31.5-132 0L48 212.2zM0 128C0 92.7 28.7 64 64 64H448c35.3 0 64 28.7 64 64V384c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V128z"/></svg>
+            </span>
+            <input class="h-12 placeholder:italic placeholder:text-gray-400 block bg-white w-full border border-dark-br rounded-md py-2 pl-10 pr-3 shadow-sm focus:outline-none focus:border-primary-br focus:ring-primary-br focus:ring-1 sm:text-sm" placeholder="Your e-mail address" type="text" name="email"/>
+          </label>
           <button class="px-2 h-12 rounded-lg bg-primary-btn text-pink-50 shadow-sm hover:bg-dark-primary-btn" type="submit">Subscribe</button>
         </div>
       </form>

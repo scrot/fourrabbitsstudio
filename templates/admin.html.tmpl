@@ -1,29 +1,40 @@
 {{define "main"}}
+<div class="size-full flex flex-col justify-center items-center my-8">
   {{template "products" .}}
+</div>
 {{end}}
 
 {{define "products"}}
-<table>
-  <thead>
-    <tr>
-      <th scope="col">Product</th>
-      <th scope="col">Download</th>
-    </tr>
-  </thead>
-  <tbody>
-  {{range .Products}}
-    {{if .ProductLink}}
+<div class="overflow-x-auto relative rounded-xl bg-clip-border shadow-md">
+  <table class="table-auto text-left text-dark-txt">
+    <thead class="bg-lighter-bg  uppercase pb-4 hover:bg-gray-100 hover:text-darker-txt">
       <tr>
-        <td>{{.ProductLink}}</td>
-        <td>{{.DownloadLink}}</td>
+        <th scope="col" class="py-3 px-6">Product</th>
+        <th scope="col" class="py-3 px-6">Download</th>
+        <th scope="col" class="py-3 px-6">Action</th>
       </tr>
-    {{else}}
-      <tr>
-        <td><button hx-post="/products" hx-vals='{"download": "{{.DownloadLink}}"}'>New Link</button></td>
-        <td name="download">{{.DownloadLink}}</td>
+    </thead>
+    <tbody>
+    {{range .Products}}
+      <tr class="bg-white border-b border-dark-br hover:bg-gray-100 hover:text-darker-txt">
+        <td class="py-4 px-6">{{.ProductLink}}</td>
+        <td class="py-4 px-6">{{.DownloadLink}}</td>
+        {{if .ProductLink}}
+        <td class="py-4 px-6">
+          <a href="/products/{{.ProductLink}}">
+            <svg class="h-6 w-6 fill-secondary-btn hover:fill-primary-btn" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M288 32c0-17.7-14.3-32-32-32s-32 14.3-32 32V274.7l-73.4-73.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l128 128c12.5 12.5 32.8 12.5 45.3 0l128-128c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L288 274.7V32zM64 352c-35.3 0-64 28.7-64 64v32c0 35.3 28.7 64 64 64H448c35.3 0 64-28.7 64-64V416c0-35.3-28.7-64-64-64H346.5l-45.3 45.3c-25 25-65.5 25-90.5 0L165.5 352H64zm368 56a24 24 0 1 1 0 48 24 24 0 1 1 0-48z"/></svg>
+          </a>
+        </td>
+        {{else}}
+        <td class="py-4 px-6">
+          <a hx-post="/products" hx-vals='{"download": "{{.DownloadLink}}"}'>
+            <svg class="h-6 w-6 fill-secondary-btn hover:fill-primary-btn" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M256 80c0-17.7-14.3-32-32-32s-32 14.3-32 32V224H48c-17.7 0-32 14.3-32 32s14.3 32 32 32H192V432c0 17.7 14.3 32 32 32s32-14.3 32-32V288H400c17.7 0 32-14.3 32-32s-14.3-32-32-32H256V80z"/></svg>
+          </a>
+        </td>
+        {{end}}
       </tr>
     {{end}}
-  {{end}}
-  </tbody>
-</table>
+    </tbody>
+  </table>
+</div>
 {{end}}

@@ -47,7 +47,7 @@ func newLoginHandler(l *slog.Logger, t *Template, s *Store) http.Handler {
 		isAdmin := s.sessions.GetBool(r.Context(), "admin")
 
 		if isAdmin {
-			RedirectTo(w, r, "/admin")
+			NewRedirect("/admin").ServeHTTP(w, r)
 			return
 		}
 		if err := t.RenderPage(w, "login", nil); err != nil {
@@ -84,8 +84,7 @@ func newLoginRequestHandler(l *slog.Logger, t *Template, s *Store) http.Handler 
 		if admin {
 			s.sessions.Put(r.Context(), "admin", admin)
 			s.sessions.Put(r.Context(), "user", username)
-			RedirectTo(w, r, "/admin")
-			return
+			NewRedirect("/admin").ServeHTTP(w, r)
 		} else {
 			err := fmt.Errorf("not admin")
 			WriteError(l, w, r, err)
@@ -99,18 +98,12 @@ func newLogoutHandler(l *slog.Logger, t *Template, s *Store) http.Handler {
 		username := s.sessions.GetString(r.Context(), "user")
 
 		if username == "" {
-			RedirectTo(w, r, "/")
+			NewRedirect("/").ServeHTTP(w, r)
 			return
 		}
 
 		s.sessions.Destroy(r.Context())
-		RedirectTo(w, r, "/")
-	})
-}
-
-func newCancelLoginHandler(l *slog.Logger, t *Template, s *Store) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		RedirectTo(w, r, "/")
+		NewRedirect("/").ServeHTTP(w, r)
 	})
 }
 
@@ -145,6 +138,11 @@ func newDownloadHandler(l *slog.Logger, t *Template, b *Bucket, s *Store) http.H
 		l.Info("new request", "url", r.URL.String())
 		link := r.PathValue("link")
 
+		if r.Header.Get("Hx-Request") == "true" {
+			w.Header().Set("Hx-Redirect", "/products/"+link)
+			w.Write([]byte{})
+		}
+
 		key, err := s.DownloadLink(r.Context(), link)
 		if err != nil {
 			WriteError(l, w, r, err)
@@ -163,6 +161,14 @@ func newDownloadHandler(l *slog.Logger, t *Template, b *Bucket, s *Store) http.H
 		w.Header().Set("Content-Disposition", cd)
 		w.Header().Set("Content-Type", "application/octet-stream")
 		http.ServeContent(w, r, key, time.Time{}, bytes.NewReader(payload))
+	})
+}
+
+func newThanksHandler(l *slog.Logger, t *Template) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := t.RenderPage(w, "thanks", nil); err != nil {
+			WriteError(l, w, r, err)
+		}
 	})
 }
 
@@ -230,6 +236,6 @@ func newGenerateLinkHandler(l *slog.Logger, t *Template, s *Store) http.Handler 
 			return
 		}
 
-		RedirectTo(w, r, "/admin")
+		NewRedirect("/admin").ServeHTTP(w, r)
 	})
 }

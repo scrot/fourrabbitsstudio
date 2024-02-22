@@ -26,7 +26,7 @@ func newLandingHandler(l *slog.Logger, t *Template, s *Store) http.Handler {
 			false,
 		}
 
-		if err := t.renderPage(w, "landing.html.tmpl", data); err != nil {
+		if err := t.RenderPage(w, "landing", data); err != nil {
 			l.Error(err.Error())
 			http.Error(w, "Whoeps!", http.StatusInternalServerError)
 		}
@@ -35,7 +35,7 @@ func newLandingHandler(l *slog.Logger, t *Template, s *Store) http.Handler {
 
 func newErrorHandler(l *slog.Logger, t *Template) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		if err := t.renderPage(w, "error.html.tmpl", nil); err != nil {
+		if err := t.RenderPage(w, "error", nil); err != nil {
 			l.Error(fmt.Errorf("newErrorHandler: unexpected error: %w", err).Error())
 			return
 		}
@@ -50,7 +50,7 @@ func newLoginHandler(l *slog.Logger, t *Template, s *Store) http.Handler {
 			RedirectTo(w, r, "/admin")
 			return
 		}
-		if err := t.renderPage(w, "login.html.tmpl", nil); err != nil {
+		if err := t.RenderPage(w, "login", nil); err != nil {
 			WriteError(l, w, r, err)
 			return
 		}
@@ -133,7 +133,7 @@ func newSubscribeHandler(l *slog.Logger, t *Template, subscriber *Subscriber) ht
 		}
 		l.Info("new subscriber", "email", email)
 
-		if err := t.renderPartial(w, "thanks", nil); err != nil {
+		if err := t.RenderPartial(w, "thanks", nil); err != nil {
 			WriteError(l, w, r, err)
 			return
 		}
@@ -207,7 +207,7 @@ func newAdminHandler(l *slog.Logger, t *Template, b *Bucket, s *Store) http.Hand
 			products,
 		}
 
-		if err := t.renderPage(w, "admin.html.tmpl", data); err != nil {
+		if err := t.RenderPage(w, "admin", data); err != nil {
 			WriteError(l, w, r, err)
 			return
 		}

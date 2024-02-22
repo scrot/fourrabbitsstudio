@@ -4,7 +4,6 @@ import (
 	"context"
 	"embed"
 	"fmt"
-	"html/template"
 	"log/slog"
 	"net/http"
 	"os"
@@ -24,7 +23,7 @@ var (
 	assets embed.FS
 
 	//go:embed templates
-	templateFS embed.FS
+	templatesFS embed.FS
 )
 
 func main() {
@@ -51,11 +50,10 @@ func run() error {
 		return fmt.Errorf("failed to set GOMAXPROCS: %w", err)
 	}
 
-	partials, err := template.ParseFS(templateFS, "templates/partials/*.tmpl")
-	if err != nil {
+	templates, error := NewTemplate(templatesFS)
+	if error != nil {
 		return err
 	}
-	templates := &Template{templateFS, partials}
 
 	bucket, err := NewBucket(ctx)
 	if err != nil {

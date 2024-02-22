@@ -28,6 +28,7 @@ var ErrMissingField = errors.New("missing fields")
 type Product struct {
 	ProductLink  string
 	DownloadLink string
+	DeadLink     bool
 }
 
 type ProductStoreConfig struct {

@@ -18,6 +18,8 @@ module.exports = {
 
         'primary-br': '#db2777', //pink-600
         'dark-br': '#e5e7eb', // gray-200
+
+        'alert': '#be123c', // rose-700
       },
     },
   },

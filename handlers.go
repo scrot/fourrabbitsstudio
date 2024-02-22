@@ -189,15 +189,29 @@ func newAdminHandler(l *slog.Logger, t *Template, b *Bucket, s *Store) http.Hand
 		}
 
 		for _, download := range downloads {
-			var seen bool
+			var hasProductLink bool
+
 			for _, product := range products {
 				if download == product.DownloadLink {
-					seen = true
+					hasProductLink = true
 					break
 				}
 			}
-			if !seen {
+			if !hasProductLink {
 				products = append(products, Product{ProductLink: "", DownloadLink: download})
+			}
+		}
+
+		for i, p := range products {
+			var hasDownloadLink bool
+			for _, d := range downloads {
+				if p.DownloadLink == d {
+					hasDownloadLink = true
+					break
+				}
+			}
+			if !hasDownloadLink {
+				products[i].DeadLink = true
 			}
 		}
 

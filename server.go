@@ -19,6 +19,7 @@ func newServer(
 	public := alice.New(store.sessions.LoadAndSave)
 	mux.Handle("GET /assets/", public.Then(http.FileServerFS(assets)))
 	mux.Handle("GET /error", public.Then(newErrorHandler(logger, templates)))
+	mux.Handle("PUT /error/back", public.Then(newCancelLoginHandler(logger, templates, store)))
 
 	mux.Handle("GET /", public.Then(newLandingHandler(logger, templates, store)))
 	mux.Handle("POST /subscribe", public.Then(newSubscribeHandler(logger, templates, subscriber)))

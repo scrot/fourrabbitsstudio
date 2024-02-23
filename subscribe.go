@@ -24,8 +24,20 @@ func (s *Subscriber) Subscribe(ctx context.Context, email string) error {
 		Email: email,
 	}
 
-	_, _, err := s.client.Subscriber.Create(ctx, sub)
+	count, _, err := s.client.Subscriber.Count(ctx)
 	if err != nil {
+		return err
+	}
+
+	if count.Total <= 100 {
+		early := mailerlite.Group{ID: "113952487829931325"}
+		sub.Groups = append(sub.Groups, early)
+	} else {
+		normal := mailerlite.Group{ID: "113953297639933753"}
+		sub.Groups = append(sub.Groups, normal)
+	}
+
+	if _, _, err := s.client.Subscriber.Create(ctx, sub); err != nil {
 		return err
 	}
 

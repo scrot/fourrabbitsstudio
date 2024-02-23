@@ -9,7 +9,6 @@ import (
 
 	"github.com/alexedwards/scs/pgxstore"
 	"github.com/alexedwards/scs/v2"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -35,7 +34,7 @@ type ProductStoreConfig struct {
 	*pgxpool.Config
 }
 
-func NewStoreConfig(l *slog.Logger) (*ProductStoreConfig, error) {
+func NewStoreConfig(_ *slog.Logger) (*ProductStoreConfig, error) {
 	uname, err := Getenv("POSTGRES_USERNAME")
 	if err != nil {
 		return nil, err
@@ -74,9 +73,9 @@ func NewStoreConfig(l *slog.Logger) (*ProductStoreConfig, error) {
 	config.HealthCheckPeriod = defaultHealthCheckPeriod
 	config.ConnConfig.ConnectTimeout = defaultConnectTimeout
 
-	config.BeforeClose = func(_ *pgx.Conn) {
-		l.Info("database closed the connection")
-	}
+	// config.BeforeClose = func(_ *pgx.Conn) {
+	// 	l.Info("database closed the connection")
+	// }
 
 	return &ProductStoreConfig{config}, nil
 }

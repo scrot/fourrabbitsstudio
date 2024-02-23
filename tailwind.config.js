@@ -1,8 +1,14 @@
 /** @type {import('tailwindcss').Config} */
+
+const defaultTheme = require('tailwindcss/defaultTheme')
+
 module.exports = {
   content: ['./templates/*.tmpl'],
   theme: {
     extend: {
+      fontFamily: {
+        'sans': ['"Inter"', ...defaultTheme.fontFamily.sans],
+      },
       colors: {
         'light-bg': '#fff7f0', //custom
         'lighter-bg': '#f9fafb', // gray-50

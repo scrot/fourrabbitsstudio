@@ -14,11 +14,11 @@ server/run: server/build
 	go run github.com/cosmtrek/air@latest
 	${OUTPUT_PATH}${BINARY_NAME}
 
+AIR_WORKDIR := /go/src/github.com/scrot/fourrabbitsstudio 
+
 .PHONY: server/live
 server/live:
-	@go generate
-	@podman build \
-		-t ${BINARY_NAME} .
+	@podman build -f Dockerfile.dev . -t ${BINARY_NAME}-dev
 	@podman run -it --rm \
 		-e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
 		-e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
@@ -30,17 +30,13 @@ server/live:
 		-e POSTGRES_HOST=${POSTGRES_HOST} \
 		-e POSTGRES_PORT=${POSTGRES_PORT} \
 		-e POSTGRES_DB=${POSTGRES_DB} \
-		-p ${SERVER_PORT}:8080 ${BINARY_NAME}
+		-e AIR_WD=${AIR_WORKDIR} \
+		-w ${AIR_WORKDIR} \
+    -v $(shell pwd):${AIR_WORKDIR} \
+		-p ${SERVER_PORT}:8080 \
+		${BINARY_NAME}-dev
+		
 
-
-# TODO: wait for 1.22 release
-# .PHONY: live
-# live:
-# 	@podman run -it --rm \
-#     -w "/fourrabbitsstudio" \
-#     -v $(shell pwd):"/fourrabbitsstudio" \
-#     -p ${SERVER_PORT}:8080 \
-#     cosmtrek/air
 
 .PHONY: db/up
 db/up: 

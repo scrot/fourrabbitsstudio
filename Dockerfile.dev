@@ -1,0 +1,5 @@
+FROM cosmtrek/air:v1.50.0
+
+RUN apt-get update && apt-get install -y nodejs npm
+
+ENTRYPOINT ["/go/bin/air"]

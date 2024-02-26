@@ -1,5 +1,7 @@
 FROM cosmtrek/air:v1.50.0
 
-RUN apt-get update && apt-get install -y nodejs npm
+RUN curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/download/v3.4.1/tailwindcss-linux-x64 && \
+  mv ./tailwindcss-linux-x64 /usr/local/bin/tailwindcss && \
+  chmod +x /usr/local/bin/tailwindcss
 
 ENTRYPOINT ["/go/bin/air"]

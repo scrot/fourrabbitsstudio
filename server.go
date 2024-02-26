@@ -22,7 +22,7 @@ func newServer(
 
 	mux.Handle("GET /", public.Then(newLandingHandler(logger, templates, store)))
 	mux.Handle("POST /subscribe", public.Then(newSubscribeHandler(logger, templates, subscriber)))
-	mux.Handle("GET /products/{link}", public.Then(newDownloadHandler(logger, templates, bucket, store)))
+	mux.Handle("GET /products/{link}", public.Then(newSimpleDownloadHandler(logger, store)))
 	mux.Handle("GET /thankyou", public.Then(newThanksHandler(logger, templates)))
 
 	mux.Handle("GET /login", public.Then(newLoginHandler(logger, templates, store)))

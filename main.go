@@ -14,7 +14,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-//go:generate npm run build
+//go:generate tailwindcss build -i ./assets/base.css -o assets/tailwind.css
 
 var (
 	port = "8080"

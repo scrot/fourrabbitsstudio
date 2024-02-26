@@ -36,8 +36,6 @@ server/live:
 		-p ${SERVER_PORT}:8080 \
 		${BINARY_NAME}-dev
 		
-
-
 .PHONY: db/up
 db/up: 
 	@migrate -database cockroachdb://${POSTGRES_DSN} -path migrations up

@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"mime"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/oklog/ulid/v2"
@@ -130,6 +132,27 @@ func newSubscribeHandler(l *slog.Logger, t *Template, subscriber *Subscriber) ht
 			WriteError(l, w, r, err)
 			return
 		}
+	})
+}
+
+func newSimpleDownloadHandler(l *slog.Logger, s *Store) http.Handler {
+	base := "https://fourrabbitsstudio.s3.eu-central-1.amazonaws.com"
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		link := r.PathValue("link")
+		key, err := s.DownloadLink(r.Context(), link)
+		if err != nil {
+			WriteError(l, w, r, err)
+			return
+		}
+		path := strings.ReplaceAll(key, " ", "+")
+
+		downloadURL, err := url.JoinPath(base, path)
+		if err != nil {
+			WriteError(l, w, r, err)
+			return
+		}
+
+		NewRedirect(downloadURL).ServeHTTP(w, r)
 	})
 }
 

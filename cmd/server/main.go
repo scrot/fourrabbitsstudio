@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"embed"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -10,21 +9,14 @@ import (
 	"time"
 
 	"github.com/lmittmann/tint"
+	"github.com/scrot/fourrabbitsstudio/internal/mail"
+	"github.com/scrot/fourrabbitsstudio/internal/server"
+	"github.com/scrot/fourrabbitsstudio/internal/storage"
+	"github.com/scrot/fourrabbitsstudio/web"
 	"go.uber.org/automaxprocs/maxprocs"
-	"golang.org/x/crypto/bcrypt"
 )
 
-//go:generate tailwindcss build -i ./assets/base.css -o assets/tailwind.css
-
-var (
-	port = "8080"
-
-	//go:embed assets
-	assets embed.FS
-
-	//go:embed templates
-	templatesFS embed.FS
-)
+var port = "8080"
 
 func main() {
 	if err := run(); err != nil {
@@ -50,27 +42,28 @@ func run() error {
 		return fmt.Errorf("failed to set GOMAXPROCS: %w", err)
 	}
 
-	templates, error := NewTemplate(templatesFS)
+	templates, error := server.NewTemplate(web.TemplatesFS)
 	if error != nil {
 		return err
 	}
 
-	bucket, err := NewBucket(ctx)
+	name := os.Getenv("BUCKET_NAME")
+	bucket, err := storage.NewGCBucket(ctx, name)
 	if err != nil {
 		return err
 	}
 
-	subscriber, err := NewSubscriber()
+	subscriber, err := mail.NewSubscriber()
 	if err != nil {
 		return err
 	}
 
-	storeConfig, err := NewStoreConfig(logger)
+	storeConfig, err := storage.NewStoreConfig(logger)
 	if err != nil {
 		return err
 	}
 
-	store, err := NewStore(ctx, storeConfig)
+	store, err := storage.NewStore(ctx, storeConfig)
 	if err != nil {
 		return err
 	}
@@ -82,16 +75,13 @@ func run() error {
 	}
 	logger.Info("connected to productstore", "db-time", now.Format(time.RFC822))
 
-	server := newServer(logger, templates, bucket, subscriber, store)
+	server := server.NewServer(logger, templates, bucket, subscriber, store)
 
 	httpServer := http.Server{
 		Addr:    ":" + port,
 		Handler: server,
 	}
 
-	secret, _ := bcrypt.GenerateFromPassword([]byte("secret"), bcrypt.DefaultCost)
-
-	logger.Info("server listening", "port", port, "secret", string(secret))
 	if err := httpServer.ListenAndServe(); err != nil {
 		return err
 	}

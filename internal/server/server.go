@@ -1,28 +1,31 @@
-package main
+package server
 
 import (
 	"log/slog"
 	"net/http"
 
 	"github.com/justinas/alice"
+	"github.com/scrot/fourrabbitsstudio/internal/mail"
+	"github.com/scrot/fourrabbitsstudio/internal/storage"
+	"github.com/scrot/fourrabbitsstudio/web"
 )
 
-func newServer(
+func NewServer(
 	logger *slog.Logger,
 	templates *Template,
-	bucket *Bucket,
-	subscriber *Subscriber,
-	store *Store,
+	bucket storage.Bucket,
+	subscriber *mail.Subscriber,
+	store *storage.Store,
 ) http.Handler {
 	mux := http.NewServeMux()
 
-	public := alice.New(store.sessions.LoadAndSave)
-	mux.Handle("GET /assets/", public.Then(http.FileServerFS(assets)))
+	public := alice.New(store.Sessions.LoadAndSave)
+	mux.Handle("GET /assets/", public.Then(http.FileServerFS(web.Assets)))
 	mux.Handle("GET /error", public.Then(newErrorHandler(logger, templates)))
 
 	mux.Handle("GET /", public.Then(newLandingHandler(logger, templates, store)))
 	mux.Handle("POST /subscribe", public.Then(newSubscribeHandler(logger, templates, subscriber)))
-	mux.Handle("GET /products/{link}", public.Then(newSimpleDownloadHandler(logger, store)))
+	mux.Handle("GET /products/{link}", public.Then(newSimpleDownloadHandler(logger, store, bucket)))
 	mux.Handle("GET /thankyou", public.Then(newThanksHandler(logger, templates)))
 
 	mux.Handle("GET /login", public.Then(newLoginHandler(logger, templates, store)))
@@ -38,10 +41,10 @@ func newServer(
 	return mux
 }
 
-func NewAdminOnly(l *slog.Logger, t *Template, s *Store) func(http.Handler) http.Handler {
+func NewAdminOnly(l *slog.Logger, t *Template, s *storage.Store) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if !s.sessions.GetBool(r.Context(), "admin") {
+			if !s.Sessions.GetBool(r.Context(), "admin") {
 				l.Info("no admin, redirect", "path", r.URL)
 				NewRedirect("/login").ServeHTTP(w, r)
 				return

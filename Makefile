@@ -6,15 +6,14 @@ POSTGRES_DSN := ${POSTGRES_USERNAME}:${POSTGRES_SECRET}@${POSTGRES_HOST}:${POSTG
 
 .PHONY: server/build
 server/build:
-	@go generate
-	@go build -ldflags="-X main.port=${SERVER_PORT}" -o="${OUTPUT_PATH}${BINARY_NAME}" .
+	@go generate ./web
+	@go build -ldflags="-X main.port=${SERVER_PORT}" -o="${OUTPUT_PATH}${BINARY_NAME}" ./cmd/server/main.go
 
 .PHONY: server/run
 server/run: server/build 
-	go run github.com/cosmtrek/air@latest
-	${OUTPUT_PATH}${BINARY_NAME}
+	go run github.com/cosmtrek/air@latest -c .air.toml
 
-AIR_WORKDIR := /go/src/github.com/scrot/fourrabbitsstudio 
+AIR_WORKDIR := /fourrabbitsstudio 
 
 .PHONY: server/live
 server/live:
@@ -23,6 +22,7 @@ server/live:
 		-e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
 		-e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
 		-e AWS_REGION=${AWS_REGION} \
+		-e GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS} \
 		-e BUCKET_NAME=${BUCKET_NAME} \
 		-e MAILERLITE_TOKEN=${MAILERLITE_TOKEN} \
 		-e POSTGRES_USERNAME=${POSTGRES_USERNAME} \
@@ -30,11 +30,12 @@ server/live:
 		-e POSTGRES_HOST=${POSTGRES_HOST} \
 		-e POSTGRES_PORT=${POSTGRES_PORT} \
 		-e POSTGRES_DB=${POSTGRES_DB} \
-		-e AIR_WD=${AIR_WORKDIR} \
+		-e air_wd=${AIR_WORKDIR} \
 		-w ${AIR_WORKDIR} \
-    -v $(shell pwd):${AIR_WORKDIR} \
+		-v $(shell pwd):${AIR_WORKDIR} \
 		-p ${SERVER_PORT}:8080 \
-		${BINARY_NAME}-dev
+		${BINARY_NAME}-dev \
+		-c .air.toml
 		
 .PHONY: db/up
 db/up: 

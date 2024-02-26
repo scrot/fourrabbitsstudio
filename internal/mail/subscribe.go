@@ -1,9 +1,10 @@
-package main
+package mail
 
 import (
 	"context"
 
 	"github.com/mailerlite/mailerlite-go"
+	"github.com/scrot/fourrabbitsstudio/internal/errors"
 )
 
 type Subscriber struct {
@@ -11,7 +12,7 @@ type Subscriber struct {
 }
 
 func NewSubscriber() (*Subscriber, error) {
-	token, err := Getenv("MAILERLITE_TOKEN")
+	token, err := errors.Getenv("MAILERLITE_TOKEN")
 	if err != nil {
 		return nil, err
 	}

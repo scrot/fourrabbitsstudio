@@ -1,4 +1,4 @@
-FROM cosmtrek/air:v1.50.0
+FROM cosmtrek/air:v1.51.0
 
 RUN curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/download/v3.4.1/tailwindcss-linux-x64 && \
   mv ./tailwindcss-linux-x64 /usr/local/bin/tailwindcss && \

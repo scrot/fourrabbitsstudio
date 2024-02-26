@@ -1,19 +1,17 @@
-package main
+package server
 
 import (
-	"bytes"
 	"fmt"
 	"log/slog"
-	"mime"
 	"net/http"
-	"net/url"
-	"strings"
-	"time"
 
 	"github.com/oklog/ulid/v2"
+	"github.com/scrot/fourrabbitsstudio/internal/errors"
+	"github.com/scrot/fourrabbitsstudio/internal/mail"
+	"github.com/scrot/fourrabbitsstudio/internal/storage"
 )
 
-func newLandingHandler(l *slog.Logger, t *Template, s *Store) http.Handler {
+func newLandingHandler(l *slog.Logger, t *Template, s *storage.Store) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			http.NotFound(w, r)
@@ -24,7 +22,7 @@ func newLandingHandler(l *slog.Logger, t *Template, s *Store) http.Handler {
 			User    string
 			IsAdmin bool
 		}{
-			s.sessions.GetString(r.Context(), "user"),
+			s.Sessions.GetString(r.Context(), "user"),
 			false,
 		}
 
@@ -44,9 +42,9 @@ func newErrorHandler(l *slog.Logger, t *Template) http.Handler {
 	})
 }
 
-func newLoginHandler(l *slog.Logger, t *Template, s *Store) http.Handler {
+func newLoginHandler(l *slog.Logger, t *Template, s *storage.Store) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		isAdmin := s.sessions.GetBool(r.Context(), "admin")
+		isAdmin := s.Sessions.GetBool(r.Context(), "admin")
 
 		if isAdmin {
 			NewRedirect("/admin").ServeHTTP(w, r)
@@ -59,7 +57,7 @@ func newLoginHandler(l *slog.Logger, t *Template, s *Store) http.Handler {
 	})
 }
 
-func newLoginRequestHandler(l *slog.Logger, t *Template, s *Store) http.Handler {
+func newLoginRequestHandler(l *slog.Logger, t *Template, s *storage.Store) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
 			WriteError(l, w, r, err)
@@ -71,7 +69,7 @@ func newLoginRequestHandler(l *slog.Logger, t *Template, s *Store) http.Handler 
 
 		// TODO: proper field validation
 		if username == "" || password == "" {
-			WriteError(l, w, r, ErrMissingField)
+			WriteError(l, w, r, errors.ErrMissingField)
 			return
 		}
 
@@ -84,8 +82,8 @@ func newLoginRequestHandler(l *slog.Logger, t *Template, s *Store) http.Handler 
 		l.Info("login request", "username", username, "admin", admin)
 
 		if admin {
-			s.sessions.Put(r.Context(), "admin", admin)
-			s.sessions.Put(r.Context(), "user", username)
+			s.Sessions.Put(r.Context(), "admin", admin)
+			s.Sessions.Put(r.Context(), "user", username)
 			NewRedirect("/admin").ServeHTTP(w, r)
 		} else {
 			err := fmt.Errorf("not admin")
@@ -95,21 +93,21 @@ func newLoginRequestHandler(l *slog.Logger, t *Template, s *Store) http.Handler 
 	})
 }
 
-func newLogoutHandler(l *slog.Logger, t *Template, s *Store) http.Handler {
+func newLogoutHandler(l *slog.Logger, t *Template, s *storage.Store) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		username := s.sessions.GetString(r.Context(), "user")
+		username := s.Sessions.GetString(r.Context(), "user")
 
 		if username == "" {
 			NewRedirect("/").ServeHTTP(w, r)
 			return
 		}
 
-		s.sessions.Destroy(r.Context())
+		s.Sessions.Destroy(r.Context())
 		NewRedirect("/").ServeHTTP(w, r)
 	})
 }
 
-func newSubscribeHandler(l *slog.Logger, t *Template, subscriber *Subscriber) http.Handler {
+func newSubscribeHandler(l *slog.Logger, t *Template, subscriber *mail.Subscriber) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
 			WriteError(l, w, r, err)
@@ -118,7 +116,7 @@ func newSubscribeHandler(l *slog.Logger, t *Template, subscriber *Subscriber) ht
 		email := r.PostFormValue("email")
 
 		if email == "" {
-			WriteError(l, w, r, ErrMissingField)
+			WriteError(l, w, r, errors.ErrMissingField)
 			return
 		}
 
@@ -135,8 +133,7 @@ func newSubscribeHandler(l *slog.Logger, t *Template, subscriber *Subscriber) ht
 	})
 }
 
-func newSimpleDownloadHandler(l *slog.Logger, s *Store) http.Handler {
-	base := "https://fourrabbitsstudio.s3.eu-central-1.amazonaws.com"
+func newSimpleDownloadHandler(l *slog.Logger, s *storage.Store, b storage.Bucket) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		link := r.PathValue("link")
 		key, err := s.DownloadLink(r.Context(), link)
@@ -144,46 +141,14 @@ func newSimpleDownloadHandler(l *slog.Logger, s *Store) http.Handler {
 			WriteError(l, w, r, err)
 			return
 		}
-		path := strings.ReplaceAll(key, " ", "+")
 
-		downloadURL, err := url.JoinPath(base, path)
+		url, err := b.ObjectURL(r.Context(), key)
 		if err != nil {
 			WriteError(l, w, r, err)
 			return
 		}
 
-		NewRedirect(downloadURL).ServeHTTP(w, r)
-	})
-}
-
-func newDownloadHandler(l *slog.Logger, t *Template, b *Bucket, s *Store) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		l.Info("new request", "url", r.URL.String())
-		link := r.PathValue("link")
-
-		if r.Header.Get("Hx-Request") == "true" {
-			w.Header().Set("Hx-Redirect", "/products/"+link)
-			w.Write([]byte{})
-		}
-
-		key, err := s.DownloadLink(r.Context(), link)
-		if err != nil {
-			WriteError(l, w, r, err)
-			return
-		}
-
-		payload, err := b.downloadObject(r.Context(), key)
-		if err != nil {
-			WriteError(l, w, r, err)
-			return
-		}
-
-		l.Info("download file", "key", key)
-
-		cd := mime.FormatMediaType("attachment", map[string]string{"filename": key})
-		w.Header().Set("Content-Disposition", cd)
-		w.Header().Set("Content-Type", "application/octet-stream")
-		http.ServeContent(w, r, key, time.Time{}, bytes.NewReader(payload))
+		NewRedirect(url).ServeHTTP(w, r)
 	})
 }
 
@@ -195,7 +160,7 @@ func newThanksHandler(l *slog.Logger, t *Template) http.Handler {
 	})
 }
 
-func newAdminHandler(l *slog.Logger, t *Template, b *Bucket, s *Store) http.Handler {
+func newAdminHandler(l *slog.Logger, t *Template, b storage.Bucket, s *storage.Store) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		l.Info("new request", "url", r.URL.String())
 
@@ -205,7 +170,7 @@ func newAdminHandler(l *slog.Logger, t *Template, b *Bucket, s *Store) http.Hand
 			return
 		}
 
-		downloads, err := b.allObjects(r.Context())
+		downloads, err := b.All(r.Context())
 		if err != nil {
 			WriteError(l, w, r, err)
 			return
@@ -221,7 +186,7 @@ func newAdminHandler(l *slog.Logger, t *Template, b *Bucket, s *Store) http.Hand
 				}
 			}
 			if !hasProductLink {
-				products = append(products, Product{ProductLink: "", DownloadLink: download})
+				products = append(products, storage.Product{ProductLink: "", DownloadLink: download})
 			}
 		}
 
@@ -243,10 +208,10 @@ func newAdminHandler(l *slog.Logger, t *Template, b *Bucket, s *Store) http.Hand
 		data := struct {
 			User     string
 			IsAdmin  bool
-			Products []Product
+			Products []storage.Product
 		}{
-			s.sessions.GetString(r.Context(), "user"),
-			s.sessions.GetBool(r.Context(), "admin"),
+			s.Sessions.GetString(r.Context(), "user"),
+			s.Sessions.GetBool(r.Context(), "admin"),
 			products,
 		}
 
@@ -257,7 +222,7 @@ func newAdminHandler(l *slog.Logger, t *Template, b *Bucket, s *Store) http.Hand
 	})
 }
 
-func newGenerateLinkHandler(l *slog.Logger, t *Template, s *Store) http.Handler {
+func newGenerateLinkHandler(l *slog.Logger, t *Template, s *storage.Store) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseForm(); err != nil {
 			WriteError(l, w, r, err)

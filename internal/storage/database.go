@@ -1,11 +1,12 @@
-package main
+package storage
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log/slog"
 	"time"
+
+	"github.com/scrot/fourrabbitsstudio/internal/errors"
 
 	"github.com/alexedwards/scs/pgxstore"
 	"github.com/alexedwards/scs/v2"
@@ -22,8 +23,6 @@ const (
 	defaultConnectTimeout    = time.Second * 5
 )
 
-var ErrMissingField = errors.New("missing fields")
-
 type Product struct {
 	ProductLink  string
 	DownloadLink string
@@ -35,27 +34,27 @@ type ProductStoreConfig struct {
 }
 
 func NewStoreConfig(_ *slog.Logger) (*ProductStoreConfig, error) {
-	uname, err := Getenv("POSTGRES_USERNAME")
+	uname, err := errors.Getenv("POSTGRES_USERNAME")
 	if err != nil {
 		return nil, err
 	}
 
-	secret, err := Getenv("POSTGRES_SECRET")
+	secret, err := errors.Getenv("POSTGRES_SECRET")
 	if err != nil {
 		return nil, err
 	}
 
-	host, err := Getenv("POSTGRES_HOST")
+	host, err := errors.Getenv("POSTGRES_HOST")
 	if err != nil {
 		return nil, err
 	}
 
-	port, err := Getenv("POSTGRES_PORT")
+	port, err := errors.Getenv("POSTGRES_PORT")
 	if err != nil {
 		return nil, err
 	}
 
-	dbname, err := Getenv("POSTGRES_DB")
+	dbname, err := errors.Getenv("POSTGRES_DB")
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +81,7 @@ func NewStoreConfig(_ *slog.Logger) (*ProductStoreConfig, error) {
 
 type Store struct {
 	connPool *pgxpool.Pool
-	sessions *scs.SessionManager
+	Sessions *scs.SessionManager
 }
 
 func NewStore(ctx context.Context, config *ProductStoreConfig) (*Store, error) {
@@ -177,7 +176,7 @@ func (s *Store) CreateProductLink(ctx context.Context, productLink, downloadLink
   `
 
 	if productLink == "" || downloadLink == "" {
-		return ErrMissingField
+		return errors.ErrMissingField
 	}
 
 	if _, err := s.connPool.Exec(ctx, stmt, productLink, downloadLink); err != nil {
@@ -195,7 +194,7 @@ func (s *Store) DownloadLink(ctx context.Context, productLink string) (string, e
   `
 
 	if productLink == "" {
-		return "", ErrMissingField
+		return "", errors.ErrMissingField
 	}
 
 	var downloadLink string

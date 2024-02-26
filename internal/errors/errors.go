@@ -1,10 +1,13 @@
-package main
+package errors
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 )
+
+var ErrMissingField = errors.New("missing fields")
 
 type EnvironmentError struct {
 	Missing []string

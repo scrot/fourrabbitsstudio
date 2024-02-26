@@ -4,13 +4,13 @@ FROM golang:${GO_VERSION}-alpine as builder
 
 WORKDIR /usr/src/app
 
+COPY cmd cmd
+COPY web web
+COPY internal internal
 COPY vendor vendor
-COPY assets assets
-COPY templates templates
 COPY go.mod go.sum ./
-COPY *.go .
 
-RUN go build -ldflags="-X main.port=8080" -o=/tmp/fourrabbitsstudio .
+RUN go build -o=/tmp/fourrabbitsstudio ./cmd/server
 
 FROM  gcr.io/distroless/base:latest
 

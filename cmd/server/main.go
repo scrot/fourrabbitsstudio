@@ -4,19 +4,19 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/lmittmann/tint"
+	"github.com/scrot/fourrabbitsstudio/internal/errors"
 	"github.com/scrot/fourrabbitsstudio/internal/mail"
 	"github.com/scrot/fourrabbitsstudio/internal/server"
 	"github.com/scrot/fourrabbitsstudio/internal/storage"
 	"github.com/scrot/fourrabbitsstudio/web"
 	"go.uber.org/automaxprocs/maxprocs"
 )
-
-var port = "8080"
 
 func main() {
 	if err := run(); err != nil {
@@ -77,8 +77,18 @@ func run() error {
 
 	server := server.NewServer(logger, templates, bucket, subscriber, store)
 
+	host, err := errors.Getenv("HOST")
+	if err != nil {
+		return err
+	}
+
+	port, err := errors.Getenv("PORT")
+	if err != nil {
+		return err
+	}
+
 	httpServer := http.Server{
-		Addr:    ":" + port,
+		Addr:    net.JoinHostPort(host, port),
 		Handler: server,
 	}
 

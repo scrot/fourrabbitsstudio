@@ -1,13 +1,14 @@
 OUTPUT_PATH := /tmp/
 BINARY_NAME := fourrabbitsstudio
-SERVER_PORT := 8081
+HOST := localhost
+PORT := 8081
 
 POSTGRES_DSN := ${POSTGRES_USERNAME}:${POSTGRES_SECRET}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=verify-full
 
 .PHONY: server/build
 server/build:
 	@go generate ./web
-	@go build -ldflags="-X main.port=${SERVER_PORT}" -o="${OUTPUT_PATH}${BINARY_NAME}" ./cmd/server/main.go
+	@go build -o="${OUTPUT_PATH}${BINARY_NAME}" ./cmd/server/main.go
 
 .PHONY: server/run
 server/run: server/build 
@@ -19,6 +20,8 @@ AIR_WORKDIR := /fourrabbitsstudio
 server/live:
 	@podman build -f Dockerfile.dev . -t ${BINARY_NAME}-dev
 	@podman run -it --rm \
+		-e HOST=${HOST} \
+		-e PORT=${PORT} \
 		-e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
 		-e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
 		-e AWS_REGION=${AWS_REGION} \

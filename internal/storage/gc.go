@@ -2,12 +2,14 @@ package storage
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"time"
 
 	gstorage "cloud.google.com/go/storage"
 	xerrors "github.com/scrot/fourrabbitsstudio/internal/errors"
 	"google.golang.org/api/iterator"
+	"google.golang.org/api/option"
 )
 
 type GCBucket struct {
@@ -16,12 +18,18 @@ type GCBucket struct {
 }
 
 func NewGCBucket(ctx context.Context, name string) (Bucket, error) {
-	_, err := xerrors.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
+	enc, err := xerrors.Getenv("GOOGLE_APPLICATION_CREDENTIALS")
 	if err != nil {
 		return nil, errors.New("GOOGLE_APPLICATION_CREDENTIALS not set")
 	}
 
-	client, err := gstorage.NewClient(ctx)
+	cred, err := base64.StdEncoding.DecodeString(enc)
+	if err != nil {
+		return nil, err
+	}
+
+	opt := option.WithCredentialsJSON(cred)
+	client, err := gstorage.NewClient(ctx, opt)
 	if err != nil {
 		return nil, err
 	}

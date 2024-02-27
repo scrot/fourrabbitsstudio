@@ -1,13 +1,13 @@
 {{define "main"}}
-<div class="size-full flex flex-col justify-center items-center my-12">
+<div class="h-full flex flex-col justify-center items-center">
   {{template "products" .}}
 </div>
 {{end}}
 
 {{define "products"}}
-<div class="overflow-x-auto relative rounded-xl bg-clip-border shadow-md">
-  <table class="table-auto text-left text-dark-txt">
-    <thead class="bg-lighter-bg  uppercase hover:bg-gray-100 hover:text-darker-txt">
+<div class="relative max-h-[70vh] rounded-xl bg-clip-border shadow-md overflow-x-auto">
+  <table class="text-left text-dark-txt">
+    <thead class="bg-lighter-bg uppercase hover:bg-gray-100 hover:text-darker-txt sticky top-0 ">
       <tr>
         <th scope="col" class="py-6 px-2 md:px-6">Product</th>
         <th scope="col" class="py-6 px-2 md:px-6">Download</th>

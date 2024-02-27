@@ -3,15 +3,10 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    font-family: Inter, sans-serif;
-    font-feature-settings: 'liga' 1, 'calt' 1;
-    /* fix for Chrome */
+
+  @font-face {
+    font-family: Farmhouse;
+    src: url(/assets/farmhouse.ttf);
   }
 
-  @supports (font-variation-settings: normal) {
-    :root {
-      font-family: InterVariable, sans-serif;
-    }
-  }
 }

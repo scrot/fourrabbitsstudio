@@ -46,7 +46,7 @@ html,
   -o-tab-size: 4;
      tab-size: 4;
   /* 3 */
-  font-family: "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-family: "Fira Sans", "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   /* 4 */
   font-feature-settings: normal;
   /* 5 */
@@ -444,16 +444,10 @@ video {
   display: none;
 }
 
-:root {
-  font-family: Inter, sans-serif;
-  font-feature-settings: 'liga' 1, 'calt' 1;
-  /* fix for Chrome */
-}
+@font-face {
+  font-family: Farmhouse;
 
-@supports (font-variation-settings: normal) {
-  :root {
-    font-family: InterVariable, sans-serif;
-  }
+  src: url(/assets/farmhouse.ttf);
 }
 
 *, ::before, ::after {
@@ -564,6 +558,10 @@ video {
   position: relative;
 }
 
+.sticky {
+  position: sticky;
+}
+
 .inset-y-0 {
   top: 0px;
   bottom: 0px;
@@ -571,10 +569,6 @@ video {
 
 .left-0 {
   left: 0px;
-}
-
-.right-0 {
-  right: 0px;
 }
 
 .top-0 {
@@ -599,11 +593,6 @@ video {
 
 .row-start-2 {
   grid-row-start: 2;
-}
-
-.my-12 {
-  margin-top: 3rem;
-  margin-bottom: 3rem;
 }
 
 .mb-4 {
@@ -638,9 +627,9 @@ video {
   display: none;
 }
 
-.size-10 {
-  width: 2.5rem;
-  height: 2.5rem;
+.size-6 {
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 .size-9 {
@@ -662,6 +651,10 @@ video {
   height: 3rem;
 }
 
+.h-28 {
+  height: 7rem;
+}
+
 .h-5 {
   height: 1.25rem;
 }
@@ -677,6 +670,14 @@ video {
 .h-fit {
   height: -moz-fit-content;
   height: fit-content;
+}
+
+.h-full {
+  height: 100%;
+}
+
+.max-h-\[70vh\] {
+  max-height: 70vh;
 }
 
 .w-24 {
@@ -699,16 +700,16 @@ video {
   width: 100%;
 }
 
+.w-screen {
+  width: 100vw;
+}
+
 .max-w-\[48rem\] {
   max-width: 48rem;
 }
 
 .grow {
   flex-grow: 1;
-}
-
-.table-auto {
-  table-layout: auto;
 }
 
 .grid-cols-\[max-content_1fr\] {
@@ -737,6 +738,10 @@ video {
 
 .justify-center {
   justify-content: center;
+}
+
+.justify-between {
+  justify-content: space-between;
 }
 
 .justify-around {
@@ -847,10 +852,6 @@ video {
      object-fit: cover;
 }
 
-.p-6 {
-  padding: 1.5rem;
-}
-
 .p-8 {
   padding: 2rem;
 }
@@ -868,6 +869,11 @@ video {
 .px-2 {
   padding-left: 0.5rem;
   padding-right: 0.5rem;
+}
+
+.px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 
 .py-2 {
@@ -914,12 +920,16 @@ video {
   text-indent: 1rem;
 }
 
+.font-\[Farmhouse\] {
+  font-family: Farmhouse;
+}
+
 .font-mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 .font-sans {
-  font-family: "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  font-family: "Fira Sans", "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
 .text-2xl {
@@ -927,9 +937,9 @@ video {
   line-height: 2rem;
 }
 
-.text-4xl {
-  font-size: 2.25rem;
-  line-height: 2.5rem;
+.text-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
 }
 
 .text-6xl {
@@ -950,6 +960,10 @@ video {
 .text-xl {
   font-size: 1.25rem;
   line-height: 1.75rem;
+}
+
+.font-light {
+  font-weight: 300;
 }
 
 .font-normal {
@@ -974,6 +988,10 @@ video {
 
 .tracking-normal {
   letter-spacing: 0em;
+}
+
+.tracking-wider {
+  letter-spacing: 0.05em;
 }
 
 .text-dark-txt {
@@ -1131,6 +1149,11 @@ video {
 
   .sm\:gap-14 {
     gap: 3.5rem;
+  }
+
+  .sm\:text-3xl {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
   }
 
   .sm\:text-sm {

@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/lmittmann/tint"
-	"github.com/scrot/fourrabbitsstudio/internal/errors"
 	"github.com/scrot/fourrabbitsstudio/internal/mail"
 	"github.com/scrot/fourrabbitsstudio/internal/server"
 	"github.com/scrot/fourrabbitsstudio/internal/storage"
@@ -77,21 +76,12 @@ func run() error {
 
 	server := server.NewServer(logger, templates, bucket, subscriber, store)
 
-	host, err := errors.Getenv("HOST")
-	if err != nil {
-		return err
-	}
-
-	port, err := errors.Getenv("PORT")
-	if err != nil {
-		return err
-	}
-
 	httpServer := http.Server{
-		Addr:    net.JoinHostPort(host, port),
+		Addr:    net.JoinHostPort("0.0.0.0", "8080"),
 		Handler: server,
 	}
 
+	logger.Info("server started listening", "addr", httpServer.Addr)
 	if err := httpServer.ListenAndServe(); err != nil {
 		return err
 	}
